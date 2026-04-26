@@ -6,10 +6,13 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
+import type { Session } from "next-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
+import { auth } from "@/auth";
+import { env } from "@/env";
+import { redis } from "@/lib/redis";
 import { db } from "@/server/db";
 
 /**
@@ -24,12 +27,17 @@ import { db } from "@/server/db";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-	return {
-		db,
-		...opts,
-	};
-};
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+}): Promise<{
+  headers: Headers;
+  db: typeof db;
+  user: Session["user"] | null;
+}> => ({
+  db,
+  user: (await auth())?.user ?? null,
+  ...opts,
+});
 
 /**
  * 2. INITIALIZATION
@@ -39,17 +47,17 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
-	transformer: superjson,
-	errorFormatter({ shape, error }) {
-		return {
-			...shape,
-			data: {
-				...shape.data,
-				zodError:
-					error.cause instanceof ZodError ? error.cause.flatten() : null,
-			},
-		};
-	},
+  transformer: superjson,
+  errorFormatter({ shape, error }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : null,
+      },
+    };
+  },
 });
 
 /**
@@ -80,20 +88,20 @@ export const createTRPCRouter = t.router;
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
-	const start = Date.now();
+  const start = Date.now();
 
-	if (t._config.isDev) {
-		// artificial delay in dev
-		const waitMs = Math.floor(Math.random() * 400) + 100;
-		await new Promise((resolve) => setTimeout(resolve, waitMs));
-	}
+  if (t._config.isDev) {
+    // artificial delay in dev
+    const waitMs = Math.floor(Math.random() * 400) + 100;
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
 
-	const result = await next();
+  const result = await next();
 
-	const end = Date.now();
-	console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+  const end = Date.now();
+  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
 
-	return result;
+  return result;
 });
 
 /**
@@ -104,3 +112,57 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+const WINDOW_SEC = 40; // 40 seconds
+const LIMIT = 5; // max 5 requests per window
+
+// Middleware for rate limiting based on IP address and procedure path.
+// will limit to 5 requests per 40 seconds per IP address for each procedure path.
+const publicRateLimiter = t.middleware(async ({ ctx, next, path }) => {
+  if (env.NODE_ENV === "development") {
+    return next();
+  }
+
+  const ip =
+    ctx.headers.get("x-forwarded-for") ??
+    ctx.headers.get("cf-connecting-ip") ??
+    "anon";
+
+  const key = `ratelimit:${ip}:${path}`;
+
+  const requests = await redis.incr(key);
+
+  if (requests === 1) {
+    await redis.expire(key, WINDOW_SEC);
+  }
+
+  if (requests > LIMIT) {
+    throw new TRPCError({
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many requests from this IP. Please slow down.",
+    });
+  }
+
+  return next();
+});
+
+// This is an example of how to combine multiple middlewares into a single procedure that you can re-use.
+export const publicRateLimitedProcedure =
+  publicProcedure.use(publicRateLimiter);
+
+export const privateProcedure = t.procedure.use(function isAuthed(opts) {
+  const { ctx } = opts;
+
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "User is not authenticated.",
+    });
+  }
+
+  return opts.next({
+    ctx: {
+      user: ctx.user,
+    },
+  });
+});
