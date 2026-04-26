@@ -3,7 +3,7 @@
     "@base-ui/react": "^1.4.1",
     "@hugeicons/core-free-icons": "^4.1.1",
     "@hugeicons/react": "^1.1.6",
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "^7.8.0",
     "@remixicon/react": "^4.9.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.69.0",
@@ -33,7 +33,7 @@
     "@types/react-dom": "19.2.3",
     "babel-plugin-react-compiler": "^1.0.0",
     "postcss": "^8.5.3",
-    "prisma": "^6.6.0",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4.0.15",
     "typescript": "^5.8.2",
     "ultracite": "^7.6.1"

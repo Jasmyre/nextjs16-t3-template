@@ -50,6 +50,6 @@
     "source.fixAll.biome": "explicit",
     "source.organizeImports.biome": "explicit"
   },
-  "prisma.pinToPrisma6": true,
+  "prisma.pinToPrisma6": false,
   "cSpell.words": ["Qwik", "turbopack", "Ultracite"]
 }
