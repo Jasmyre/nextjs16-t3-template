@@ -1,12 +1,13 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { Geist, Instrument_Sans } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
+import { TRPCReactProvider } from "@/trpc/react";
+import { type NavItem, NavigationBar } from "../components/navigation-bar";
 
-const instrumentSans = Instrument_Sans({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -23,7 +24,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className={cn(geist.variable, "font-sans", instrumentSans.variable)} lang="en" suppressHydrationWarning>
+    <html
+      className={cn(geist.variable, geist.variable, "font-sans", inter.variable)}
+      lang="en"
+      suppressHydrationWarning
+    >
       <body>
         <TRPCReactProvider>
           <ThemeProvider
@@ -32,6 +37,12 @@ export default function RootLayout({
             disableTransitionOnChange
             enableSystem
           >
+            <NavigationBar
+              enableBlock
+              navItems={navItems}
+              pageItems={pageItems}
+              title="Template"
+            />
             {children}
           </ThemeProvider>
         </TRPCReactProvider>
@@ -39,3 +50,33 @@ export default function RootLayout({
     </html>
   );
 }
+
+const navItems: NavItem[] = [
+  {
+    name: "Home",
+    href: "/",
+  },
+  {
+    name: "Maintenance",
+    href: "/maintenance",
+  },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+  },
+];
+
+const pageItems: NavItem[] = [
+  {
+    name: "Home",
+    href: "/",
+  },
+  {
+    name: "Maintenance",
+    href: "/maintenance",
+  },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+  },
+];

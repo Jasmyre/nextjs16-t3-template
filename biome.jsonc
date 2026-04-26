@@ -32,6 +32,9 @@
             "functions": ["clsx", "cva", "cn"]
           }
         }
+      },
+      "style": {
+        "noNestedTernary": "off"
       }
     }
   },
