@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body>
+      <body className="bg-background">
         <TRPCReactProvider>
           <ThemeProvider
             attribute="class"
