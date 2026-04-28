@@ -239,7 +239,7 @@ export function NavigationBar({
 
       {/* Desktop Navigation */}
       <header
-        className={`fixed top-0 right-0 left-0 z-50 mx-auto w-screen border-gray-300 border-b bg-card transition-transform duration-300 ease-in-out dark:border-muted ${
+        className={`fixed top-0 right-0 left-0 z-50 mx-auto w-screen border-muted border-b bg-background transition-transform duration-300 ease-in-out dark:border-muted ${
           isVisible ? "translate-y-0" : "-translate-y-full"
         } hidden lg:block`}
       >
@@ -314,9 +314,11 @@ export function NavigationBar({
                             href={item.href ?? "#"}
                           >
                             <span className="flex items-center gap-2 transition-transform duration-200">
-                              <span className="transition-transform duration-200 group-hover:scale-110">
-                                {item.icon}
-                              </span>
+                              {item.icon && (
+                                <span className="transition-transform duration-200 group-hover:scale-110">
+                                  {item.icon}
+                                </span>
+                              )}
                               {item.name}
                             </span>
                           </Link>
@@ -402,7 +404,7 @@ export function NavigationBar({
       {/* Breadcrumbs - Desktop */}
       {pathname !== "/" && (
         <div
-          className={`fixed bg-card ${isVisible ? "top-14" : "top-10"} right-0 left-0 z-40 border-gray-300 border-b transition-transform duration-300 ease-in-out dark:border-muted ${
+          className={`fixed bg-background ${isVisible ? "top-14" : "top-10"} right-0 left-0 z-40 border-muted border-b transition-transform duration-300 ease-in-out dark:border-muted ${
             isVisible ? "translate-y-0" : "-translate-y-full"
           } hidden lg:block`}
         >
@@ -446,7 +448,7 @@ export function NavigationBar({
 
       {/* Mobile Navigation */}
       <header
-        className={`fixed top-0 right-0 left-0 z-50 bg-card transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 left-0 z-50 bg-background transition-transform duration-300 ease-in-out ${
           isVisible ? "translate-y-0" : "-translate-y-full"
         } lg:hidden`}
       >
@@ -526,7 +528,7 @@ export function NavigationBar({
 
         {/* Mobile Breadcrumbs */}
         {pathname !== "/" && (
-          <div className="border-gray-300 border-t border-b bg-card px-4 py-2 dark:border-muted">
+          <div className="border-muted border-t border-b bg-background px-4 py-2 dark:border-muted">
             <Breadcrumb>
               <BreadcrumbList>
                 {breadcrumbs.length > 3 ? (
