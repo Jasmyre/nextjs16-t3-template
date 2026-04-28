@@ -10,14 +10,12 @@ import {
 
 const page = () => (
   <div className="flex min-h-[80vh] items-center justify-center max-sm:px-4">
-    <Card className="w-full max-w-md border-gray-300 bg-white text-center dark:border-gray-700 dark:bg-gray-800">
+    <Card className="w-full max-w-md text-center">
       <CardHeader>
-        <CardTitle className="font-bold text-2xl text-gray-900 dark:text-white">
+        <CardTitle className="font-bold text-2xl">
           Authentication Error
         </CardTitle>
-        <CardDescription className="text-gray-500 dark:text-gray-400">
-          Something went wrong!
-        </CardDescription>
+        <CardDescription>Something went wrong!</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild size={"sm"} variant={"outline"}>
