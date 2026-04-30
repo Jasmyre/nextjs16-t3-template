@@ -51,5 +51,22 @@
     "source.organizeImports.biome": "explicit"
   },
   "prisma.pinToPrisma6": false,
-  "cSpell.words": ["Qwik", "turbopack", "Ultracite"]
+  "cSpell.words": [
+    "autoincrement",
+    "CLIENTVAR",
+    "cmdk",
+    "Createsubtopics",
+    "cuid",
+    "hugeicons",
+    "NEXTAUTH",
+    "nextjs",
+    "Noto",
+    "oklch",
+    "Qwik",
+    "remixicon",
+    "Segoe",
+    "turbopack",
+    "typesafety",
+    "Ultracite"
+  ]
 }

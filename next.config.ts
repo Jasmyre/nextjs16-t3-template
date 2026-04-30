@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   cacheComponents: true,
   reactCompiler: true,
+  allowedDevOrigins: ["192.168.1.28"],
   experimental: {
     turbopackFileSystemCacheForDev: true,
   },
@@ -19,7 +20,6 @@ const nextConfig: NextConfig = {
     },
   },
 };
-
 
 export default async function config(): Promise<import("next").NextConfig> {
   // Skip env validation during tests or when explicitly requested

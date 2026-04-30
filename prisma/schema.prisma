@@ -3,7 +3,6 @@
 
 generator client {
     provider = "prisma-client-js"
-    output   = "../generated/prisma"
 }
 
 datasource db {
@@ -17,4 +16,48 @@ model Post {
     updatedAt DateTime @updatedAt
 
     @@index([name])
+}
+
+model User {
+    // Basic fields
+    id            String    @id @default(cuid())
+    name          String
+    userName      String?
+    email         String?   @unique
+    emailVerified DateTime?
+    password      String?
+    image         String?
+    role          UserRole  @default(USER)
+    biography     String?
+
+    // Privacy settings
+    isPrivate Boolean @default(false)
+
+    // Timestamps
+    createdAt DateTime @default(now())
+
+    accounts Account[]
+}
+
+model Account {
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
+    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+enum UserRole {
+    ADMIN
+    USER
 }
