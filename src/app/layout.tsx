@@ -15,32 +15,60 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-const BASE_URL =
-  env.BASE_URL ?? "err:Environment_'BASE_URL'_Variable_Is_Not_Defined";
+const BASE_URL = env.BASE_URL ?? "http://localhost:3000";
 
 const GOOGLE_SITE_VERIFICATION =
   env.GOOGLE_SITE_VERIFICATION ??
   "err:Environment_'GOOGLE_SITE_VERIFICATION'_Variable_Is_Not_Defined";
 
+const SITE_NAME = "Template";
+const DEFAULT_TITLE = `${SITE_NAME} | Next.js 16`;
+const DEFAULT_DESCRIPTION = "A modern Next.js 16 starter template.";
+const DEFAULT_OG_IMAGE = "/thumbnail.png";
+
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
-  keywords: ["template"],
+  applicationName: SITE_NAME,
+  keywords: ["nextjs", "template", "typescript", "t3", "starter"],
   title: {
-    default: "Template | nextjs 16",
-    template: "%s | Template",
+    default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: "Template for nextjs 16",
+  description: DEFAULT_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
-    title: "Template | nextjs 16",
+    type: "website",
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
     url: new URL(BASE_URL),
     images: [
       {
-        url: "/thumbnail.png",
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `Thumbnail image for ${BASE_URL}`,
+        alt: `${SITE_NAME} preview image`,
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   other: {
     "google-site-verification": GOOGLE_SITE_VERIFICATION,
