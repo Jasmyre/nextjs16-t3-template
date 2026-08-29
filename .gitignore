@@ -51,3 +51,7 @@ yarn-error.log*
 
 # temporary files
 *.tmp.txt
+
+# Ignore volatile Memory Bank context files
+/memory-bank/activeContext.md
+/memory-bank/progress.md
