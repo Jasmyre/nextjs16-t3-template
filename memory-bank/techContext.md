@@ -18,4 +18,4 @@
 - `npm run check` / `npm run fix` — Ultracite validation/fixes
 - `npm run db:generate`, `db:migrate`, `db:push`, `db:studio` — Prisma workflows
 
-The repository uses npm (`npm@11.4.1`) and requires Node.js 20+ according to the README. Environment setup is based on `.env.example` copied to `.env`.
+The repository uses npm (`npm@11.4.1`) and requires Node.js 20+ according to the README. Environment setup is based on `.env.example` copied to `.env`. Required operational configuration includes `BASE_URL`, `DATABASE_URL`, `AUTH_SECRET`, `NEXTAUTH_URL`, and provider credentials when Google/GitHub sign-in is enabled. Redis and Google verification variables are also supported by the environment schema.

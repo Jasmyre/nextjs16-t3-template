@@ -1,5 +1,5 @@
 # Product Context
 
-This repository exists to reduce the setup work required for a modern full-stack TypeScript application. It combines common infrastructure—NextAuth, Prisma/PostgreSQL, tRPC, validation, and UI primitives—behind conventions that are straightforward to extend.
+The application provides a foundation for a real authenticated product rather than a collection of disconnected examples. Users can access the auth flow, sign in with credentials or configured social providers, and work with server data through typed procedures. The current domain model includes users, roles, linked accounts, privacy/profile fields, and posts.
 
-The intended experience is a clean starter that supports authenticated workflows, typed server/client data access, responsive themed UI, and a predictable local development workflow.
+The operational experience should be predictable: configure `.env`, connect PostgreSQL, apply the Prisma schema, run the application, and use the protected routes and API endpoints. Maintenance mode can be enabled publicly through `NEXT_PUBLIC_IS_IN_MAINTENANCE` while the application is unavailable for normal use.
