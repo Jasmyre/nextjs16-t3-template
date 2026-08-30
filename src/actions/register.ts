@@ -1,11 +1,9 @@
 "use server";
 
-import bcrypt from "bcryptjs";
 import type * as z from "zod";
 
-import { getUserByEmail } from "@/data/user";
 import { registerSchema } from "@/schemas/auth-schema";
-import { db } from "@/server/db";
+import { registerUser } from "@/services/auth-service";
 
 export const register = async (values: z.infer<typeof registerSchema>) => {
   const validatedFields = registerSchema.safeParse(values);
@@ -18,21 +16,11 @@ export const register = async (values: z.infer<typeof registerSchema>) => {
     typeof registerSchema
   >;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const result = await registerUser({ name, email, password });
 
-  const existingUser = await getUserByEmail(email);
-
-  if (existingUser) {
+  if (!result.ok) {
     return { error: "User already exist!" };
   }
-
-  await db.user.create({
-    data: {
-      name,
-      email,
-      password: hashedPassword,
-    },
-  });
 
   // TODO: Send verification email
 

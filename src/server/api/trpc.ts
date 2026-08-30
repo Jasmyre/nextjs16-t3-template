@@ -13,7 +13,6 @@ import { ZodError } from "zod";
 import { auth } from "@/auth";
 import { env } from "@/env";
 import { redis } from "@/lib/redis";
-import { db } from "@/server/db";
 
 /**
  * 1. CONTEXT
@@ -31,10 +30,8 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
 }): Promise<{
   headers: Headers;
-  db: typeof db;
   user: Session["user"] | null;
 }> => ({
-  db,
   user: (await auth())?.user ?? null,
   ...opts,
 });

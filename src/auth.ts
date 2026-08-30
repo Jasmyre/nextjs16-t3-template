@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { UserRole } from "@prisma/client";
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
-import { getUserById } from "@/data/user";
+import { getUserById, updateEmailVerification } from "@/data/user-repository";
 import { db } from "@/server/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -12,10 +12,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async linkAccount({ user }) {
-      await db.user.update({
-        where: { id: user.id },
-        data: { emailVerified: new Date() },
-      });
+      if (!user.id) {
+        return;
+      }
+
+      await updateEmailVerification(user.id);
     },
   },
   callbacks: {

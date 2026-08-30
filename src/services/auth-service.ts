@@ -1,0 +1,46 @@
+import type { User } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import "server-only";
+
+import { createUser, getUserByEmail } from "@/data/user-repository";
+
+export type RegisterResult =
+  | { ok: true; userId: string }
+  | { ok: false; code: "EMAIL_IN_USE" };
+
+export const registerUser = async (data: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<RegisterResult> => {
+  const existingUser = await getUserByEmail(data.email);
+
+  if (existingUser) {
+    return { ok: false, code: "EMAIL_IN_USE" };
+  }
+
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
+  const user = await createUser({
+    name: data.name,
+    email: data.email,
+    password: hashedPassword,
+  });
+
+  return { ok: true, userId: user.id };
+};
+
+export const verifyCredentials = async (
+  email: string,
+  password: string
+): Promise<User | null> => {
+  const user = await getUserByEmail(email);
+
+  if (!user?.password) {
+    return null;
+  }
+
+  const passwordsMatch = await bcrypt.compare(password, user.password);
+
+  return passwordsMatch ? user : null;
+};
