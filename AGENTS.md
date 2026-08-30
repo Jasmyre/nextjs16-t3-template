@@ -120,4 +120,32 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 
 ---
 
+## Memory Bank
+
+This project maintains a `memory-bank/` directory with living documentation. **Always consult these files before making changes and update them when completing work.**
+
+### Key Files
+
+| File | Purpose |
+|---|---|
+| `memory-bank/projectbrief.md` | Project goals, scope, and constraints |
+| `memory-bank/productContext.md` | User-facing features and workflows |
+| `memory-bank/techContext.md` | Tech stack, dependencies, and environment setup |
+| `memory-bank/systemPatterns.md` | Architecture, layered conventions, and runtime flow |
+| `memory-bank/activeContext.md` | Current focus, recent decisions, and open questions |
+| `memory-bank/progress.md` | What has been done and what remains |
+
+### Before You Start
+
+1. Read `memory-bank/activeContext.md` to understand current state.
+2. Read `memory-bank/systemPatterns.md` to understand the layered architecture (Presentation → Controller → Business Logic → Data Access) and ensure new code respects tier boundaries.
+
+### After You Finish
+
+1. Update `memory-bank/activeContext.md` with any new decisions, focus shifts, or open questions.
+2. Update `memory-bank/progress.md` to reflect completed or blocked work.
+3. If you changed the architecture, component structure, or runtime flow, update `memory-bank/systemPatterns.md`.
+
+---
+
 Most formatting and common issues are automatically fixed by Biome. Run `npm exec -- ultracite fix` before committing to ensure compliance.
