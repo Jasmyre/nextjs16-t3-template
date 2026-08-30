@@ -76,6 +76,6 @@
     "ultracite/biome/jest"
   ],
   "files": {
-    "includes": ["**", "!src/components/ui"]
+    "includes": ["!src/components/ui"]
   }
 }
