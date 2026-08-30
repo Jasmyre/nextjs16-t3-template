@@ -8,6 +8,7 @@
 - Prisma 7 with PostgreSQL and `pg`
 - Tailwind CSS 4, Radix UI, shadcn-style components, next-themes
 - Zod and React Hook Form for validation/forms
+- `server-only` guard on service and data-access modules
 - Ultracite and Biome for formatting/linting
 
 ## Commands
