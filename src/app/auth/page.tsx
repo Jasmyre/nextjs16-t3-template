@@ -19,7 +19,7 @@ export default function AuthPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="font-bold text-2xl">
-            Welcome to ICTQuest
+            Welcome to Authentication
           </CardTitle>
           <CardDescription className="text-muted-foreground">
             Sign in to your account or create a new one
