@@ -37,16 +37,23 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.0.15",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.6",
     "@types/node": "^20.14.10",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@vitest/coverage-v8": "^4.1.11",
     "babel-plugin-react-compiler": "^1.0.0",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.3",
     "prisma": "^7.8.0",
     "tailwindcss": "^4.0.15",
     "typescript": "^5.8.2",
-    "ultracite": "^7.6.1"
+    "ultracite": "^7.6.1",
+    "vitest": "^4.1.11"
   },
   "name": "nextjs16-t3-template",
   "scripts": {
@@ -63,7 +70,14 @@
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "fix": "ultracite fix"
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
+    "fix": "ultracite fix",
+    "test": "vitest run --project unit",
+    "test:unit:watch": "vitest --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:coverage": "vitest run --project unit --coverage",
+    "test:all": "vitest run",
+    "test:e2e": "playwright test"
   },
   "type": "module",
   "version": "0.1.0",

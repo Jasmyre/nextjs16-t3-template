@@ -213,6 +213,35 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 - `HydrateClient` wraps with `<Suspense>` + `connection()` for PPR compatibility.
 - Context + QueryClient wrapped in `React.cache()` for request-level deduplication.
 
+## Testing Patterns
+
+Three-layer test suite: Vitest (jsdom) unit, Vitest (node) DB integration, and Playwright e2e.
+
+### Tooling & scripts
+
+- Vitest 4 uses `test.projects` (the `vitest.workspace.*` files were removed in v4). Filter with `--project unit` / `--project integration`.
+- `server-only` is aliased to `tests/server-only-stub.ts` in both Vitest configs; `tests/unit/setup.ts` sets `SKIP_ENV_VALIDATION=true` and mocks `next/navigation` + `next-themes`.
+- Scripts: `test` (unit), `test:integration`, `test:coverage` (unit + reporting, no thresholds), `test:all`, `test:e2e`, `typecheck:test` (`tsc -p tsconfig.test.json`).
+- Coverage is scoped via `coverage.include` to the seams under test, excluding shadcn `ui/`.
+
+### Where tests live
+
+| Layer | Location | Environment | Runs on |
+|---|---|---|---|
+| Unit | `src/**/*.test.{ts,tsx}` | jsdom | `npm test` |
+| Integration | `tests/integration/**` | node (`forks`, `fileParallelism: false`) | `DATABASE_URL_TEST` required |
+| E2E | `tests/e2e/**` | Playwright | live `dev` server + DB |
+
+### Conventions
+
+- **Unit tests target seams**: test components, hooks, and routers in isolation by mocking the boundary (`@/services/**`, `@/auth`, `@/lib/redis`). Port-based routers use `createCaller` with mocked deps.
+- **Integration tests hit the real DB** via a PrismaClient on `DATABASE_URL_TEST`; `beforeEach` truncates tables (`TRUNCATE ... RESTART IDENTITY CASCADE`). They skip cleanly with a notice when `DATABASE_URL_TEST` is unset.
+- **Integration gates**: gate the whole DB-dependent block with `const describeDb = integrationEnabled ? describe : describe.skip`; keep pure-logic tests in a separate non-skipped `describe`. The boolean comes from `tests/integration/db.ts` and is re-exported (with a notice) from `tests/integration/setup.ts`.
+- **E2E**: Playwright `setup` project signs in and saves `storageState` for the authed project; logged-out flows target a separate project. WebServer boots `npm run dev`.
+- **Query by placeholder / role-name string, not regex**: the auth forms' inputs aren't label-associated and buttons have exact text, so use `getByPlaceholderText` and `getByRole("button", { name: "..." })` string matchers (satisfies `useTopLevelRegex`).
+- **TDD**: don't test nonexistent behavior — e.g., navigation-bar "Log out" items have no `onSelect` handler yet, so e2e omits sign-out until it's wired.
+- **No speculative test helpers**: add shared helpers only once used; remove dead test infrastructure (`render-with-providers.tsx` was removed as unused).
+
 ## Pattern Documentation Policy
 
 When a **repetitive manual change** or recurring correction is identified (e.g., "use `const` instead of `let` in React components", consistent naming conventions, error handling patterns), **update this file** to codify the pattern so it is applied consistently going forward. This prevents the same correction from being repeated across sessions and serves as a living style guide.

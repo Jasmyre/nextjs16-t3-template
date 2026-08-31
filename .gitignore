@@ -7,6 +7,9 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/tests/e2e/.auth/
 
 # database
 /prisma/db.sqlite
@@ -39,6 +42,7 @@ yarn-error.log*
 # do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
 .env
 .env*.local
+.env.test
 
 # vercel
 .vercel
@@ -51,6 +55,7 @@ yarn-error.log*
 
 # temporary files
 *.tmp.txt
+install.log
 
 # Ignore volatile Memory Bank context files
 /memory-bank/activeContext.md
