@@ -1,3 +1,7 @@
+import { loadEnv } from "vite";
+
+Object.assign(process.env, loadEnv("test", process.cwd(), ""));
+
 (process.env as Record<string, string | undefined>).NODE_ENV = "test";
 process.env.SKIP_ENV_VALIDATION = "true";
 

@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnv } from "vite";
 
 const baseURL = "http://localhost:3000";
+
+const testDatabaseUrl = loadEnv("test", process.cwd(), "").DATABASE_URL_TEST;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -36,6 +39,9 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: baseURL,
+    env: testDatabaseUrl
+      ? { ...process.env, DATABASE_URL: testDatabaseUrl }
+      : undefined,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

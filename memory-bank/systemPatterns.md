@@ -236,6 +236,7 @@ Three-layer test suite: Vitest (jsdom) unit, Vitest (node) DB integration, and P
 
 - **Unit tests target seams**: test components, hooks, and routers in isolation by mocking the boundary (`@/services/**`, `@/auth`, `@/lib/redis`). Port-based routers use `createCaller` with mocked deps.
 - **Integration tests hit the real DB** via a PrismaClient on `DATABASE_URL_TEST`; `beforeEach` truncates tables (`TRUNCATE ... RESTART IDENTITY CASCADE`). They skip cleanly with a notice when `DATABASE_URL_TEST` is unset.
+- **Integration env loading**: Vitest does not inject non-`VITE_`-prefixed vars from `.env` into `process.env`, so `tests/integration/setup.ts` explicitly calls `Object.assign(process.env, loadEnv("test", process.cwd(), ""))` before reading `DATABASE_URL_TEST`/`DATABASE_URL`.
 - **Integration gates**: gate the whole DB-dependent block with `const describeDb = integrationEnabled ? describe : describe.skip`; keep pure-logic tests in a separate non-skipped `describe`. The boolean comes from `tests/integration/db.ts` and is re-exported (with a notice) from `tests/integration/setup.ts`.
 - **E2E**: Playwright `setup` project signs in and saves `storageState` for the authed project; logged-out flows target a separate project. WebServer boots `npm run dev`.
 - **Query by placeholder / role-name string, not regex**: the auth forms' inputs aren't label-associated and buttons have exact text, so use `getByPlaceholderText` and `getByRole("button", { name: "..." })` string matchers (satisfies `useTopLevelRegex`).
