@@ -16,13 +16,22 @@ export const register = async (values: z.infer<typeof registerSchema>) => {
     typeof registerSchema
   >;
 
-  const result = await registerUser({ name, email, password });
+  try {
+    const result = await registerUser({ name, email, password });
 
-  if (!result.ok) {
-    return { error: "User already exist!" };
+    if (!result.ok) {
+      switch (result.code) {
+        case "EMAIL_IN_USE":
+          return { error: "User already exists!" };
+        default:
+          return { error: "Something went wrong!" };
+      }
+    }
+
+    // TODO: Send verification email
+
+    return { success: "User created!" };
+  } catch {
+    return { error: "Something went wrong!" };
   }
-
-  // TODO: Send verification email
-
-  return { success: "User created!" };
 };

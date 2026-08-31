@@ -31,13 +31,16 @@ const { trpc: api, HydrateClient: BaseHydrateClient } =
 export { api };
 
 /**
- * Wraps the tRPC `HydrateClient` so the page is explicitly rendered dynamically.
+ * Wraps the tRPC `HydrateClient` so the wrapped subtree is rendered explicitly dynamically.
  *
  * `BaseHydrateClient` dehydrates the query cache via `@tanstack/query-core`, which stamps
  * `dehydratedAt: Date.now()`. Next.js prerendering rejects `Date.now()` unless request data
  * (e.g. `connection()`) is accessed first, so we guard it here and wrap it in a `Suspense`
- * boundary to satisfy `cacheComponents`. This keeps the fix in one place for every page that
- * uses `HydrateClient`.
+ * boundary to satisfy `cacheComponents`.
+ *
+ * Scope this to a dynamic region only (e.g. a small widget), not an entire page — with
+ * `cacheComponents` enabled the surrounding static shell is pre-rendered and this `Suspense`
+ * boundary becomes the partial-prerendered (PPR) dynamic hole.
  */
 export function HydrateClient(props: { children: React.ReactNode }) {
   return (

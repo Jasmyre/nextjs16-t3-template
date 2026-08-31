@@ -3,17 +3,23 @@ import { LatestPost } from "@/components/post";
 import { api, HydrateClient } from "@/trpc/server";
 import { ModeToggle } from "../components/mode-toggle";
 
-export default async function Home() {
-  api.post.getLatest.prefetch();
+export default function Home() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8">
+      <ModeToggle />
+      <Suspense fallback={<p>Loading latest post...</p>}>
+        <LatestPostWithHydration />
+      </Suspense>
+    </main>
+  );
+}
+
+async function LatestPostWithHydration() {
+  await api.post.getLatest.prefetch();
 
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center gap-8">
-        <ModeToggle />
-        <Suspense>
-          <LatestPost />
-        </Suspense>
-      </main>
+      <LatestPost />
     </HydrateClient>
   );
 }

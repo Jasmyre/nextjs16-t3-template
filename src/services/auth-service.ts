@@ -1,4 +1,5 @@
 import type { User } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import bcrypt from "bcryptjs";
 import "server-only";
 
@@ -21,13 +22,24 @@ export const registerUser = async (data: {
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  const user = await createUser({
-    name: data.name,
-    email: data.email,
-    password: hashedPassword,
-  });
+  try {
+    const user = await createUser({
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+    });
 
-  return { ok: true, userId: user.id };
+    return { ok: true, userId: user.id };
+  } catch (error) {
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { ok: false, code: "EMAIL_IN_USE" };
+    }
+
+    throw error;
+  }
 };
 
 export const verifyCredentials = async (
