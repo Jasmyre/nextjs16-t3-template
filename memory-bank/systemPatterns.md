@@ -2,10 +2,9 @@
 
 ## Application boundaries
 
-- Next.js App Router is the application boundary; server-first patterns are preferred.
-- NextAuth v5 exports auth helpers and handlers from `src/auth.ts`; App Router exposes `GET` and `POST` through `src/app/api/auth/[...nextauth]/route.ts`.
-- `src/proxy.ts` applies route protection/redirect behavior using shared route definitions in `src/routes.ts`.
-- tRPC is organized as root/router/context code under `src/server/api`, with the Next.js handler under `src/app/api/trpc/[trpc]` and client/server helpers under `src/trpc`.
+- Next.js 16 App Router is the application boundary; server-first patterns are preferred.
+- NextAuth v5 handles authentication via `src/auth.ts`; routes are exposed through `src/app/api/auth/[...nextauth]/route.ts`.
+- tRPC handles typed API endpoints; routers live under `src/server/api`, client/server helpers under `src/trpc`.
 - Prisma access is centralized in `src/server/db.ts`; PostgreSQL is the persistence target.
 - Environment validation is defined in `src/env.js`; do not document environment variables without checking that file and `.env.example`.
 - Shared UI primitives live under `src/components/ui` and use shadcn-style patterns with Tailwind CSS.
@@ -41,34 +40,141 @@ Conventions:
 
 Keep new features aligned with these boundaries: controllers stay thin, business rules live in `src/services`, and persisted data access lives in `src/data`.
 
-## Component-Based Caching & Partial Prerendering (PPR)
+## Next.js App Router Patterns (v16)
 
-`cacheComponents: true` in `next.config.ts` enables automatic component-level static prerendering. Pages are prerendered as static shells; only `<Suspense>` boundaries containing async/await become dynamic holes at request time.
+### Server Components (default)
 
-### Static shells with dynamic holes
+- All components are Server Components by default — they run on the server and can be `async`.
+- Use Server Components for data fetching, access to backend resources, and keeping sensitive logic (API keys, DB queries) on the server.
+- Server Components cannot use React hooks, browser APIs, or event handlers.
+- Fetch data directly in the component with `async/await`; no `useEffect` needed.
 
-- Next.js prerenders the full page as a static HTML shell at build time.
-- Any `<Suspense>` boundary that awaits data (tRPC queries, `connection()`, etc.) is treated as a **dynamic hole** — only that subtree renders dynamically; the rest is static.
-- Keep dynamic regions as small and scoped as possible (e.g. a single widget), not entire pages.
+### Client Components
+
+- Add `"use client"` at the top of a file to opt into client rendering.
+- Required when using: React hooks (`useState`, `useEffect`), browser APIs (`window`, `document`), event handlers (`onClick`, `onSubmit`), or client-only libraries.
+- Client Components cannot be `async` — they cannot directly fetch data.
+- Keep the client boundary as narrow as possible. Lift `"use client"` to leaf components, not layouts or page-level components.
+- Prefer Server Components; only add `"use client"` when the above requirements apply.
+
+### Server Actions
+
+- Define in separate files with `"use server"` directive at the top.
+- Use `useActionState` (React 19) in Client Components to manage form state and pending status.
+- Always validate inputs with Zod before processing.
+- Call `revalidatePath()` from `next/cache` after successful mutations to refresh cached data.
+- Server Actions without proper validation can expose the database to unauthorized access — always validate.
+
+### Route Handlers
+
+- Files named `route.ts` export named functions for HTTP methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+- Located under `src/app/api/**`; dynamic segments use `[param]` or `[...catchAll]`.
+- In Next.js 16, `params` is Promise-based: `{ params }: { params: Promise<{ id: string }> }` — always `await` it.
+- Use `NextRequest` and `NextResponse` from `next/server` for request/response handling.
+
+### File conventions
+
+| File | Purpose | Notes |
+|---|---|---|
+| `page.tsx` | Route page — the UI for a route segment | Export a default React component |
+| `layout.tsx` | Shared layout wrapping child routes | Persists across navigation; receives `children` |
+| `loading.tsx` | Suspense loading UI shown while route chunk loads | Renders automatically as a `<Suspense>` boundary |
+| `error.tsx` | Error boundary for a route segment | Must be a Client Component (`"use client"`) |
+| `not-found.tsx` | 404 UI for a route segment | Triggered by `notFound()` or unmatched URLs |
+| `route.ts` | API Route Handler | Export named HTTP method functions |
+| `template.tsx` | Like layout but re-renders on navigation | Use when you need remounting behavior |
+| `global-error.tsx` | Root-level error boundary | Catches errors in the root layout |
+| `default.tsx` | Fallback for parallel route segments | Required when using parallel routes |
+
+Status in this codebase: `page.tsx` (4), `layout.tsx` (1), `loading.tsx` (1), `route.ts` (2). `error.tsx` and `not-found.tsx` are not yet implemented — add them for robust error handling.
+
+### Parallel and Intercepting Routes
+
+- **Parallel Routes** (`@folder` convention): render multiple pages simultaneously in the same layout using named slots. Use for dashboards with sidebar + main + detail panels, or modals alongside page content.
+- **Intercepting Routes** (`(..)`, `(...)`, `(....)`): intercept a route as if navigating to a different URL. Use for modals that link to a shareable URL — the modal shows on click but the full page renders on direct navigation/refresh.
+- Neither is used in this codebase yet. Use when building dashboards, modals, or multi-panel layouts.
+
+### `proxy.ts` (Routing Boundary)
+
+- `src/proxy.ts` replaces `middleware.ts` in Next.js 16. It runs before a request is completed and can modify the response.
+- Used for authentication checks, redirects, maintenance mode, and route protection.
+- Export a default function and a `config` object with a `matcher` pattern.
+- Do not create a `middleware.ts` file — use `proxy.ts`.
+
+### Next.js 16 Async APIs
+
+All Next.js APIs are async in version 16. Always `await` them:
+
+| API | Import | Notes |
+|---|---|---|
+| `cookies()` | `next/headers` | Returns `Promise<ReadonlyRequestCookies>` |
+| `headers()` | `next/headers` | Returns `Promise<Headers>` |
+| `params` | Page/Route props | `Promise<{ id: string }>` — `await` before destructuring |
+| `searchParams` | Page props | `Promise<{ sort?: string }>` — `await` before destructuring |
+| `connection()` | `next/server` | Marks a subtree as dynamic for PPR |
+
+Forgetting to `await` these returns a Promise instead of the value, causing subtle bugs.
+
+### Data Fetching
+
+- Fetch in Server Components whenever possible — no client-side state management needed.
+- Use `React.cache()` for deduplication when the same data is fetched in multiple places within a single render.
+- Parallelize independent fetches with `Promise.all()`.
+- Add `loading.tsx` files for Suspense loading states at the route level.
+- Wrap async subtrees in `<Suspense>` for streaming and PPR dynamic holes.
+- For client-side data fetching, use TanStack Query (via tRPC) — not `fetch` in Client Components.
+
+### Metadata
+
+- **Static**: export a `metadata` object from `layout.tsx` or `page.tsx`. Use for site-wide defaults.
+- **Dynamic**: export an async `generateMetadata` function for per-page SEO (OpenGraph, title, description). Receives `params` and `searchParams` as Promises.
+- The root layout (`src/app/layout.tsx`) defines site-wide metadata with `metadataBase`, `openGraph`, `twitter`, and `robots`.
+
+## Caching Strategies
+
+### `"use cache"` directive (Next.js 16+)
+
+- Mark a Server Component or async function with `"use cache"` at the top of the file to enable explicit caching.
+- Use `cacheLife(profile)` to set time-based expiry: `"hours"`, `"days"`, `"max"`, or a custom `CacheLife` config.
+- Use `cacheTag("tag-name")` to tag cache entries for on-demand revalidation via `revalidateTag()` from `next/cache`.
+- Combine with `revalidateTag()` in Route Handlers or Server Actions to invalidate specific cache entries when data changes.
+- Not yet used in this codebase. Use for pages with expensive data fetches that can be cached and revalidated on demand.
+
+### `cacheComponents` (Automatic component-level caching)
+
+- `cacheComponents: true` in `next.config.ts` enables automatic static/dynamic splitting via PPR.
+- Pages are prerendered as static HTML shells at build time.
+- Any `<Suspense>` boundary that awaits data becomes a **dynamic hole** — only that subtree renders dynamically.
+- Keep dynamic regions as small and scoped as possible (e.g., a single widget, not entire pages).
 
 ### The `connection()` pattern
 
-When a subtree needs request-scoped data (e.g., tRPC hydration with `Date.now()` timestamps), wrap it in a `<Suspense>` boundary and call `await connection()` from `next/server` inside. This opts only that subtree into dynamic rendering while the surrounding shell stays static. See `src/trpc/server.tsx` `HydrateClient` for the canonical example.
+- When a subtree needs request-scoped data (e.g., tRPC hydration with `Date.now()`), wrap it in `<Suspense>` and call `await connection()` from `next/server` inside.
+- This opts only that subtree into dynamic rendering while the surrounding shell stays static.
+- See `src/trpc/server.tsx` `HydrateClient` for the canonical example.
 
 ### React `cache()` for deduplication
 
-Wrap factories (context creation, QueryClient creation) in `React.cache()` so multiple calls within a single RSC render share one instance. Use this for:
-
-- tRPC context creation (`createTRPCContext`)
-- QueryClient creation (`createQueryClient`)
+- Wrap factories in `React.cache()` so multiple calls within a single RSC render share one instance.
+- Currently used for: tRPC context creation (`createTRPCContext`), QueryClient creation (`createQueryClient`).
 
 ### React Compiler
 
-`reactCompiler: true` in `next.config.ts` enables automatic memoization via `babel-plugin-react-compiler`. Client components are memoized implicitly — manual `useMemo`/`useCallback` is unnecessary for standard cases. Only use explicit memoization when the compiler cannot infer stability (e.g., dynamically computed references).
+- `reactCompiler: true` in `next.config.ts` enables automatic memoization via `babel-plugin-react-compiler`.
+- Client components are memoized implicitly — manual `useMemo`/`useCallback` is unnecessary for standard cases.
+- Only use explicit memoization when the compiler cannot infer stability (e.g., dynamically computed references).
 
 ### TanStack Query dehydration
 
-Server-fetched queries are serialized with SuperJSON via `shouldDehydrateQuery` (including pending queries for Suspense compatibility). The client hydrates from this serialized cache. `staleTime: 30s` prevents immediate refetch after hydration.
+- Server-fetched queries are serialized with SuperJSON via `shouldDehydrateQuery` (including pending queries for Suspense compatibility).
+- The client hydrates from this serialized cache; `staleTime: 30s` prevents immediate refetch after hydration.
+
+### On-demand revalidation (not yet used)
+
+- `revalidatePath("/path")` — invalidates all cached entries for a specific path.
+- `revalidateTag("tag")` — invalidates all cache entries tagged with a specific tag.
+- Use in Server Actions or Route Handlers after mutations to refresh stale data.
+- Prefer `cacheTag` + `revalidateTag` over `revalidatePath` for granular invalidation.
 
 ## tRPC Patterns (v11)
 
@@ -104,7 +210,7 @@ Server-fetched queries are serialized with SuperJSON via `shouldDehydrateQuery` 
 
 - `createCaller` for direct in-process calls (no HTTP hop) — file is marked `server-only`.
 - `createHydrationHelpers` produces RSC-compatible `api` and `HydrateClient`.
-- `HydrateClient` wraps with `<Suspense>` + `connection()` for PPR compatibility (see Component-Based Caching section above).
+- `HydrateClient` wraps with `<Suspense>` + `connection()` for PPR compatibility.
 - Context + QueryClient wrapped in `React.cache()` for request-level deduplication.
 
 ## Pattern Documentation Policy
