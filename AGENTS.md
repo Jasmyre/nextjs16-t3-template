@@ -149,3 +149,19 @@ This project maintains a `memory-bank/` directory with living documentation. **A
 ---
 
 Most formatting and common issues are automatically fixed by Biome. Run `npm exec -- ultracite fix` before committing to ensure compliance.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub Issues in `Jasmyre/nextjs16-t3-template`, operated via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
