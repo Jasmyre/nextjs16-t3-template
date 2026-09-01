@@ -4,7 +4,6 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   ChevronRight,
   Home,
-  LogOut,
   Menu,
   Moon,
   Search,
@@ -19,6 +18,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import React, { useEffect, useState } from "react";
+import { SignOutButton } from "@/components/sign-out-button";
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -390,9 +390,11 @@ export function NavigationBar({
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer opacity-80 transition-all duration-200 hover:opacity-100">
-                    <LogOut className="mr-2 h-4 w-4 transition-transform duration-200" />
-                    <span>Log out</span>
+                  <DropdownMenuItem
+                    asChild
+                    className="cursor-pointer opacity-80 transition-all duration-200 hover:opacity-100"
+                  >
+                    <SignOutButton />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -781,12 +783,14 @@ function MobileSidebar({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              asChild
               className="relative cursor-pointer pl-8 opacity-80 transition-all duration-200 hover:opacity-100"
-              onClick={onNavigate}
             >
-              <div className="absolute top-0 bottom-0 left-2 w-px bg-sidebar-border" />
-              <LogOut className="mr-2 h-4 w-4 transition-transform duration-200" />
-              <span>Log out</span>
+              <SignOutButton
+                leading={
+                  <div className="absolute top-0 bottom-0 left-2 w-px bg-sidebar-border" />
+                }
+              />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
