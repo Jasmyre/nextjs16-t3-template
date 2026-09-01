@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import type { JSX } from "react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -15,6 +16,7 @@ import { registerSchema } from "@/schemas/auth-schema";
 
 export const SignupForm = (): JSX.Element => {
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [success, setSuccess] = useState<string | undefined>(undefined);
 
@@ -82,13 +84,31 @@ export const SignupForm = (): JSX.Element => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
-              <Input
-                {...field}
-                className="mt-1"
-                id="password"
-                placeholder="******"
-                type="password"
-              />
+              <div className="relative mt-1">
+                <Input
+                  {...field}
+                  className="pr-10"
+                  id="password"
+                  placeholder="******"
+                  type={showPassword ? "text" : "password"}
+                />
+                <Button
+                  className="absolute top-0 right-0 h-full px-3 py-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  type="button"
+                  variant="ghost"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
+                </Button>
+              </div>
             </FormItem>
           )}
         />
