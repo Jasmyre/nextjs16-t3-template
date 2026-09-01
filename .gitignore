@@ -55,6 +55,7 @@ yarn-error.log*
 
 # temporary files
 *.tmp.txt
+*.tmp.md
 install.log
 
 # Ignore volatile Memory Bank context files
