@@ -9,6 +9,23 @@
 - Environment validation is defined in `src/env.js`; do not document environment variables without checking that file and `.env.example`.
 - Shared UI primitives live under `src/components/ui` and use shadcn-style patterns with Tailwind CSS.
 - Authentication forms use Zod schemas and React Hook Form. The theme is managed with `next-themes`.
+- Authorization is enforced at the controller tier via the permissions module (`src/server/permissions.ts`) and the `permissionProcedure` tRPC guard; services stay focused on domain rules and never evaluate permissions.
+
+## Permissions (ABAC)
+
+Single reusable module `src/server/permissions.ts` (server-only), demonstrated on the `Post` resource.
+
+- **Roles persist as a many-to-many**: `Role` (implicit `_RoleToUser`) on `User`, name values `RoleName` enum `ADMIN` / `MODERATOR` / `USER`. The three rows are seeded by the migration SQL. A user's effective permissions are the **union** of their roles' grants.
+- **Engine**:
+  - `hasPermission(user, resource, action, data?)` — row-level check. Each role/action rule is an unconditional boolean grant or an ownership predicate `(user, data) => boolean`. Predicate rules **deny when `data` is absent** (can't prove ownership).
+  - `hasActionGrant(user, resource, action)` — coarse precheck used by the controller guard: predicate rules count as grants because the row check happens later.
+- **Post matrix** — `admin` full access; `moderator` views/creates/updates any, deletes own only; `user` views/creates any, updates/deletes own only.
+- **Session threading**: `getUserById`/`getUserByEmail` include `roles`; the JWT callback stamps `token.roles`; the session callback exposes `session.user.roles: RoleName[]`. `src/types/next-auth.d.ts` declares `roles` (and `id: string`) so `Session["user"]` satisfies `PermissionUser`.
+- **Default role**: `registerUser` connects new users to the seeded `USER` role.
+- **Controller-enforcement pattern** (do this in tRPC routers, not services):
+  1. `permissionProcedure("Resource", "action")` guards the whole procedure (`UNAUTHORIZED` when signed out, `FORBIDDEN` when no held role grants the action).
+  2. For row-level rules, the resolver fetches the record and re-checks `hasPermission(user, "Resource", "action", record)` — throwing `FORBIDDEN` when it fails — before delegating to the service.
+  3. A missing record is also treated as `FORBIDDEN` (prevents existence probing on guarded actions).
 
 ## Layered architecture (3-tier + MVC)
 
@@ -189,6 +206,7 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 | `publicProcedure` | `timingMiddleware` | Unauthenticated endpoints; logs timing, simulates latency in dev |
 | `publicRateLimitedProcedure` | `timingMiddleware` → `publicRateLimiter` | Rate-limited public endpoints (Redis, 5 req/40s/IP, skipped in dev) |
 | `privateProcedure` | `isAuthed` | Authenticated endpoints; throws `UNAUTHORIZED` if no session, narrows `ctx.user` |
+| `permissionProcedure(resource, action)` | `isAuthed` → action grant check | Permission-guarded endpoints; throws `UNAUTHORIZED` if no session, `FORBIDDEN` if no held role grants the action (row-level checks happen in the resolver with the record) |
 
 ### Router definitions (`src/server/api/root.ts`, `src/server/api/routers/**`)
 

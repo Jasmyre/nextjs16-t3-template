@@ -1,5 +1,4 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { UserRole } from "@prisma/client";
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
 import { getUserById, updateEmailVerification } from "@/data/user-repository";
@@ -28,10 +27,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
       }
 
-      if (token.role && session.user) {
-        session.user.role = token.role as UserRole;
-      }
-
+      session.user.roles = token.roles ?? [];
       session.user.emailVerified = token.emailVerified as Date;
 
       if (token.userName && session.user) {
@@ -51,9 +47,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return token;
       }
 
-      token.role = existingUser?.role;
-      token.emailVerified = existingUser?.emailVerified;
-      token.userName = existingUser?.userName;
+      token.roles = existingUser.roles.map((role) => role.name);
+      token.emailVerified = existingUser.emailVerified;
+      token.userName = existingUser.userName;
 
       return token;
     },

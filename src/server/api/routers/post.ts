@@ -1,7 +1,25 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { create, getLatest, greet } from "@/services/post-service";
+import {
+  createPostSchema,
+  deletePostSchema,
+  updatePostSchema,
+} from "@/schemas/post-schema";
+import {
+  createTRPCRouter,
+  permissionProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
+import { hasPermission } from "@/server/permissions";
+import {
+  create,
+  getById,
+  getLatest,
+  greet,
+  remove,
+  update,
+} from "@/services/post-service";
 
 export const postRouter = createTRPCRouter({
   hello: publicProcedure
@@ -10,9 +28,39 @@ export const postRouter = createTRPCRouter({
       greeting: greet(input.text),
     })),
 
-  create: publicProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .mutation(({ input }) => create(input.name)),
+  create: permissionProcedure("Post", "create")
+    .input(createPostSchema)
+    .mutation(({ ctx, input }) => create(input.name, ctx.user.id)),
+
+  update: permissionProcedure("Post", "update")
+    .input(updatePostSchema)
+    .mutation(async ({ ctx, input }) => {
+      const post = await getById(input.id);
+
+      if (!(post && hasPermission(ctx.user, "Post", "update", post))) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to update this post.",
+        });
+      }
+
+      return update(input.id, input.name);
+    }),
+
+  delete: permissionProcedure("Post", "delete")
+    .input(deletePostSchema)
+    .mutation(async ({ ctx, input }) => {
+      const post = await getById(input.id);
+
+      if (!(post && hasPermission(ctx.user, "Post", "delete", post))) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to delete this post.",
+        });
+      }
+
+      return remove(input.id);
+    }),
 
   getLatest: publicProcedure.query(() => getLatest()),
 });
