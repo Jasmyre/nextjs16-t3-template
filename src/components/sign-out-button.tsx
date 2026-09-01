@@ -8,7 +8,7 @@ import { Button } from "./ui/button";
 
 export const SignOutButton = ({ leading }: { leading?: ReactNode }) => (
   <Button
-    className="flex w-full cursor-pointer items-center"
+    className="flex w-full cursor-pointer items-center justify-start"
     onClick={() => signOut({ callbackUrl: DEFAULT_LOGIN_REDIRECT })}
     variant="ghost"
   >
