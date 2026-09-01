@@ -13,6 +13,8 @@ import { ZodError } from "zod";
 import { auth } from "@/auth";
 import { env } from "@/env";
 import { redis } from "@/lib/redis";
+import type { PermissionAction, ResourceName } from "@/server/permissions";
+import { hasActionGrant } from "@/server/permissions";
 
 /**
  * 1. CONTEXT
@@ -163,3 +165,27 @@ export const privateProcedure = t.procedure.use(function isAuthed(opts) {
     },
   });
 });
+
+/**
+ * Permission-guarded procedure. It enforces that the signed-in user holds at
+ * least one role granting `action` on `resource`. Row-level rules (e.g.
+ * ownership) are evaluated by the procedure itself via `hasPermission` with
+ * the fetched record, since the record is only available after the resolver
+ * starts.
+ *
+ * Unauthorized calls are rejected with a `FORBIDDEN` result.
+ */
+export const permissionProcedure = (
+  resource: ResourceName,
+  action: PermissionAction
+) =>
+  privateProcedure.use(({ ctx, next }) => {
+    if (!hasActionGrant(ctx.user, resource, action)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `User is not allowed to ${action} ${resource}.`,
+      });
+    }
+
+    return next({ ctx });
+  });

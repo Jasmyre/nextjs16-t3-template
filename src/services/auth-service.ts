@@ -5,6 +5,8 @@ import "server-only";
 
 import { createUser, getUserByEmail } from "@/data/user-repository";
 
+const DEFAULT_ROLE = "USER" as const;
+
 export type RegisterResult =
   | { ok: true; userId: string }
   | { ok: false; code: "EMAIL_IN_USE" };
@@ -27,6 +29,7 @@ export const registerUser = async (data: {
       name: data.name,
       email: data.email,
       password: hashedPassword,
+      roles: { connect: { name: DEFAULT_ROLE } },
     });
 
     return { ok: true, userId: user.id };

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getUserById } from "@/data/user-repository";
 import { registerUser, verifyCredentials } from "@/services/auth-service";
 import { integrationEnabled } from "./setup";
 
@@ -14,6 +15,24 @@ describeDb("auth-service integration", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.userId).toBeTypeOf("string");
+    }
+  });
+
+  it("assigns the default user role on signup", async () => {
+    const result = await registerUser({
+      name: "Default Role",
+      email: "default-role@example.com",
+      password: "secret123",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    const user = await getUserById(result.userId);
+    expect(user).not.toBeNull();
+    if (user) {
+      expect(user.roles.map((role) => role.name)).toEqual(["USER"]);
     }
   });
 
