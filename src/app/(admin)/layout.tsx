@@ -1,5 +1,6 @@
 import { type ReactNode, Suspense } from "react";
 import { AdminGate } from "@/components/admin-gate";
+import { AdminShell } from "@/components/admin-shell";
 
 export default function AdminLayout({
   children,
@@ -7,7 +8,9 @@ export default function AdminLayout({
   return (
     <div className="min-h-svh bg-background">
       <Suspense fallback={null}>
-        <AdminGate>{children}</AdminGate>
+        <AdminGate>
+          <AdminShell>{children}</AdminShell>
+        </AdminGate>
       </Suspense>
     </div>
   );

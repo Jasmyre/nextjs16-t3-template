@@ -1,27 +1,22 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { UserTable } from "@/components/user-table";
+import { api, HydrateClient } from "@/trpc/server";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  await api.admin.listUsers.prefetch();
+
   return (
-    <main className="container mx-auto max-w-7xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Admin</CardTitle>
-          <CardDescription>
-            Administration tools will land here.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">
-            This placeholder will become the admin panel shell.
+    <HydrateClient>
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="font-heading font-semibold text-2xl">
+            User management
+          </h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            View and manage all registered users.
           </p>
-        </CardContent>
-      </Card>
-    </main>
+        </div>
+        <UserTable />
+      </div>
+    </HydrateClient>
   );
 }
