@@ -2,7 +2,6 @@ import "@/styles/globals.css";
 
 import type { Metadata } from "next";
 import { Geist, Inter } from "next/font/google";
-import { type NavItem, NavigationBar } from "@/components/navigation-bar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
@@ -92,12 +91,6 @@ export default function RootLayout({
             disableTransitionOnChange
             enableSystem
           >
-            <NavigationBar
-              enableBlock
-              navItems={navItems}
-              pageItems={pageItems}
-              title="Template"
-            />
             {children}
           </ThemeProvider>
         </TRPCReactProvider>
@@ -105,33 +98,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-const navItems: NavItem[] = [
-  {
-    name: "Home",
-    href: "/",
-  },
-  {
-    name: "Maintenance",
-    href: "/maintenance",
-  },
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-  },
-];
-
-const pageItems: NavItem[] = [
-  {
-    name: "Home",
-    href: "/",
-  },
-  {
-    name: "Maintenance",
-    href: "/maintenance",
-  },
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-  },
-];

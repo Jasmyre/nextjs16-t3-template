@@ -1,4 +1,4 @@
-export const publicRoutes = ["/", "/maintenance"];
+export const publicRoutes = ["/landing", "/maintenance"];
 
 export const authRoutes = [
   "/auth",
@@ -10,3 +10,5 @@ export const authRoutes = [
 export const apiAuthPrefix = "/api/auth";
 
 export const DEFAULT_LOGIN_REDIRECT = "/";
+
+export const adminRoutes = ["/admin"];
