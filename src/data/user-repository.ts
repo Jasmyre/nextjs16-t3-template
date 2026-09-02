@@ -9,6 +9,14 @@ const withRoles = {
   roles: true,
 } as const;
 
+const adminUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  createdAt: true,
+  roles: true,
+} as const;
+
 export const getUserByEmail = async (
   email: string
 ): Promise<UserWithRoles | null> =>
@@ -23,16 +31,13 @@ export const getUserById = async (id: string): Promise<UserWithRoles | null> =>
     include: withRoles,
   });
 
-export const getAllUsers = async (): Promise<UserWithRoles[]> =>
+export const getAllUsers = async () =>
   db.user.findMany({
-    include: withRoles,
+    select: adminUserSelect,
     orderBy: { createdAt: "asc" },
   });
 
-export const updateUserRoles = async (
-  userId: string,
-  roleNames: RoleName[]
-): Promise<UserWithRoles> =>
+export const updateUserRoles = async (userId: string, roleNames: RoleName[]) =>
   db.user.update({
     where: { id: userId },
     data: {
@@ -40,7 +45,7 @@ export const updateUserRoles = async (
         set: roleNames.map((name) => ({ name })),
       },
     },
-    include: withRoles,
+    select: adminUserSelect,
   });
 
 export const createUser = async (data: {

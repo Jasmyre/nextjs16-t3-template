@@ -12,6 +12,8 @@
 - Authorization is enforced at the controller tier via the permissions module (`src/server/permissions.ts`) and the `permissionProcedure` tRPC guard; services stay focused on domain rules and never evaluate permissions.
 
 > Visibility-scoping exception (documented): for `post.list`, the coarse gate stays in the controller (`permissionProcedure("Post", "view")`), but the row-visibility decision (USER sees own; MODERATOR/ADMIN see all) lives in the service (`list(user)`), which inspects `user.roles` to choose `listAllPosts()` vs `listPostsByAuthor(user.id)`. This is a list-scope rule with no single row to test in `hasPermission`, so it's treated as a domain visibility rule rather than a row-level grant. The permission module's `view` action remains a role grant only.
+>
+> Self-demotion exception (documented): on `admin.updateRoles` the coarse gate (`permissionProcedure("Admin", "manage")`) admits only ADMINS, but the rule that an ADMIN cannot remove their **own** ADMIN role is a business rule that lives in the service (`updateRoles`), which throws `FORBIDDEN` when `userId === callerId && callerRoles` holds `ADMIN` and `roleNames` omits it. It checks the caller's session roles, not a fresh DB read.
 
 ## Permissions (ABAC)
 
@@ -22,6 +24,7 @@ Single reusable module `src/server/permissions.ts` (server-only), demonstrated o
   - `hasPermission(user, resource, action, data?)` — row-level check. Each role/action rule is an unconditional boolean grant or an ownership predicate `(user, data) => boolean`. Predicate rules **deny when `data` is absent** (can't prove ownership).
   - `hasActionGrant(user, resource, action)` — coarse precheck used by the controller guard: predicate rules count as grants because the row check happens later.
 - **Post matrix** — `admin` full access; `moderator` views/creates/updates any, deletes own only; `user` views/creates any, updates/deletes own only.
+- **Admin matrix** — `Admin` resource with a single `manage` action granted only to `ADMIN`. The `permissionProcedure("Admin", "manage")` gate therefore admits ADMINS only. `Admin` has no row-level rules, so `ResourceData<"Admin">` resolves to `never`.
 - **Session threading**: `getUserById`/`getUserByEmail` include `roles`; the JWT callback stamps `token.roles`; the session callback exposes `session.user.roles: RoleName[]`. `src/types/next-auth.d.ts` declares `roles` (and `id: string`) so `Session["user"]` satisfies `PermissionUser`.
 - **Default role**: `registerUser` connects new users to the seeded `USER` role.
 - **Controller-enforcement pattern** (do this in tRPC routers, not services):

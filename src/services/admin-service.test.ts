@@ -80,19 +80,5 @@ describe("admin service", () => {
         })
       ).resolves.toEqual(updated);
     });
-
-    it("allows a non-admin user to change their own roles", async () => {
-      const updated = user("user-1", ["MODERATOR"]);
-      updateUserRolesMock.mockResolvedValue(updated);
-
-      await expect(
-        updateRoles({
-          callerId: "user-1",
-          callerRoles: ["USER"],
-          userId: "user-1",
-          roleNames: ["MODERATOR"],
-        })
-      ).resolves.toEqual(updated);
-    });
   });
 });

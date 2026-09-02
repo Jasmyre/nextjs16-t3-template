@@ -19,15 +19,9 @@ export interface PostData {
   authorId: string;
 }
 
-export interface AdminData {
-  userId: string;
-}
-
 export type ResourceData<R extends ResourceName> = R extends "Post"
   ? PostData
-  : R extends "Admin"
-    ? AdminData
-    : never;
+  : never;
 
 export type PermissionRule<R extends ResourceName> =
   | boolean
