@@ -7,16 +7,27 @@ export interface PermissionUser {
   roles: RoleName[];
 }
 
-export type ResourceName = "Post";
-export type PermissionAction = "view" | "create" | "update" | "delete";
+export type ResourceName = "Post" | "Admin";
+export type PermissionAction =
+  | "view"
+  | "create"
+  | "update"
+  | "delete"
+  | "manage";
 
 export interface PostData {
   authorId: string;
 }
 
+export interface AdminData {
+  userId: string;
+}
+
 export type ResourceData<R extends ResourceName> = R extends "Post"
   ? PostData
-  : never;
+  : R extends "Admin"
+    ? AdminData
+    : never;
 
 export type PermissionRule<R extends ResourceName> =
   | boolean
@@ -35,11 +46,19 @@ const POST_PERMISSIONS: Record<RoleName, PermissionDefinition<"Post">> = {
   USER: { view: true, create: true, update: ownsPost, delete: ownsPost },
 };
 
-export const PERMISSIONS: Record<
-  ResourceName,
-  Record<RoleName, PermissionDefinition<ResourceName>>
-> = {
+const ADMIN_PERMISSIONS: Record<RoleName, PermissionDefinition<"Admin">> = {
+  ADMIN: { manage: true },
+  MODERATOR: {},
+  USER: {},
+};
+
+type PermissionMatrix = {
+  [R in ResourceName]: Record<RoleName, PermissionDefinition<R>>;
+};
+
+export const PERMISSIONS: PermissionMatrix = {
   Post: POST_PERMISSIONS,
+  Admin: ADMIN_PERMISSIONS,
 };
 
 export const hasPermission = <R extends ResourceName>(

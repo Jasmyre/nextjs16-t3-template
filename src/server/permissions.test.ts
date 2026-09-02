@@ -91,9 +91,42 @@ describe("hasPermission", () => {
     });
   });
 
+  describe("Admin resource manage action", () => {
+    it("grants manage to the ADMIN role", () => {
+      expect(hasPermission(admin, "Admin", "manage")).toBe(true);
+    });
+
+    it("denies manage to the USER role", () => {
+      expect(hasPermission(other, "Admin", "manage")).toBe(false);
+    });
+
+    it("denies manage to the MODERATOR role", () => {
+      expect(hasPermission(moderator, "Admin", "manage")).toBe(false);
+    });
+
+    it("denies manage when the user holds no roles", () => {
+      expect(
+        hasPermission({ id: "user-0", roles: [] }, "Admin", "manage")
+      ).toBe(false);
+    });
+
+    it("grants manage to a user holding multiple roles including ADMIN", () => {
+      expect(hasPermission(adminAndUser, "Admin", "manage")).toBe(true);
+    });
+  });
+
   describe("hasActionGrant", () => {
     it("grants a user precheck for an ownership-predicated action", () => {
       expect(hasActionGrant(owner, "Post", "update")).toBe(true);
+    });
+
+    it("grants the Admin manage precheck to the ADMIN role", () => {
+      expect(hasActionGrant(admin, "Admin", "manage")).toBe(true);
+    });
+
+    it("denies the Admin manage precheck to non-admin roles", () => {
+      expect(hasActionGrant(other, "Admin", "manage")).toBe(false);
+      expect(hasActionGrant(moderator, "Admin", "manage")).toBe(false);
     });
 
     it("denies the precheck when no held role grants the action", () => {

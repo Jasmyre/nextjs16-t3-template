@@ -23,6 +23,26 @@ export const getUserById = async (id: string): Promise<UserWithRoles | null> =>
     include: withRoles,
   });
 
+export const getAllUsers = async (): Promise<UserWithRoles[]> =>
+  db.user.findMany({
+    include: withRoles,
+    orderBy: { createdAt: "asc" },
+  });
+
+export const updateUserRoles = async (
+  userId: string,
+  roleNames: RoleName[]
+): Promise<UserWithRoles> =>
+  db.user.update({
+    where: { id: userId },
+    data: {
+      roles: {
+        set: roleNames.map((name) => ({ name })),
+      },
+    },
+    include: withRoles,
+  });
+
 export const createUser = async (data: {
   name: string;
   email: string;
