@@ -103,7 +103,7 @@ Keep new features aligned with these boundaries: controllers stay thin, business
 | `global-error.tsx` | Root-level error boundary | Catches errors in the root layout |
 | `default.tsx` | Fallback for parallel route segments | Required when using parallel routes |
 
-Status in this codebase: `page.tsx` (4), `layout.tsx` (1), `loading.tsx` (1), `route.ts` (2). `error.tsx` and `not-found.tsx` are not yet implemented — add them for robust error handling.
+Status in this codebase: `page.tsx` (7), `layout.tsx` (4, incl. route-group layouts), `loading.tsx` (1), `route.ts` (2). `error.tsx` and `not-found.tsx` are not yet implemented — add them for robust error handling.
 
 ### Parallel and Intercepting Routes
 
@@ -117,6 +117,18 @@ Status in this codebase: `page.tsx` (4), `layout.tsx` (1), `loading.tsx` (1), `r
 - Used for authentication checks, redirects, maintenance mode, and route protection.
 - Export a default function and a `config` object with a `matcher` pattern.
 - Do not create a `middleware.ts` file — use `proxy.ts`.
+- Route vocabulary lives in `src/routes.ts`: `publicRoutes`, `authRoutes`, `adminRoutes`, `apiAuthPrefix`, `DEFAULT_LOGIN_REDIRECT`. Proxy rules: auth routes redirect signed-in users to `DEFAULT_LOGIN_REDIRECT`; signed-in users on `/landing` are sent to `/`; anyone else on a non-public, non-auth route is sent to `/landing`.
+
+### Route groups & layout composition
+
+- URL-transparent route groups give each app area its own layout and access rules:
+  - `(marketing)/` — `MarketingHeader` (logo → `/landing`, Sign In + Get Started → `/auth`); hosts `/landing` and `/maintenance`.
+  - `(app)/` — the `NavigationBar` (client) with auth-aware items; hosts `/` (dashboard) and `/posts`.
+  - `(admin)/` — placeholder shell; hosts `/admin`.
+  - Root `layout.tsx` keeps only shared providers (`TRPCReactProvider`, `ThemeProvider`, fonts, metadata) — never route nav.
+- **A route group's root is the parent path**: `(app)/page.tsx` and `(admin)/page.tsx` both resolve to `/`. Two root-level groups can't each have a `page.tsx`; nest an extra segment (`(admin)/admin/page.tsx`) instead.
+- **Auth-aware nav must stay a PPR dynamic hole**: an `async` layout calling `auth()` makes the whole route dynamic, and with `cacheComponents` the build fails ("Uncached data was accessed outside of <Suspense>", surfaced at the root providers). Instead wrap the nav in `<Suspense>` and put `await connection()` + `await auth()` inside an async server component (`src/components/app-navigation.tsx`). The static shell prerenders with the fallback nav; the session-aware items stream in as the dynamic hole.
+- The `NavigationBar` breadcrumb "Home" is literal `/`; keep it correct per group by gating which layout renders it (it lives only in `(app)`, where `/` is the dashboard).
 
 ### Next.js 16 Async APIs
 

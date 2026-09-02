@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default function LandingPage() {
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background px-6 py-20">
       <div

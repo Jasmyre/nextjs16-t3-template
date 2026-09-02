@@ -41,8 +41,13 @@ export default auth((req) => {
     return;
   }
 
+  // Authenticated users who visit the landing page go to the dashboard
+  if (isLoggedIn && nextUrl.pathname === "/landing") {
+    return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+  }
+
   if (!(isLoggedIn || isPublicRoute)) {
-    return Response.redirect(new URL("/auth", nextUrl), 302);
+    return Response.redirect(new URL("/landing", nextUrl), 302);
   }
 
   return;

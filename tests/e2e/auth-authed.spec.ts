@@ -17,7 +17,7 @@ test.describe("authenticated flows", () => {
     await page.getByRole("button", { name: "User menu" }).click();
     await page.getByRole("button", { name: "Log out" }).click();
 
-    await expect(page).toHaveURL("/");
+    await expect(page).toHaveURL("/landing");
 
     await expect
       .poll(async () => {
