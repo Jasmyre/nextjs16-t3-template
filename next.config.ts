@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.28"],
   experimental: {
     turbopackFileSystemCacheForDev: true,
+    authInterrupts: true,
   },
   logging: {
     fetches: {

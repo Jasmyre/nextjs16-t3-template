@@ -103,12 +103,20 @@ Keep new features aligned with these boundaries: controllers stay thin, business
 | `loading.tsx` | Suspense loading UI shown while route chunk loads | Renders automatically as a `<Suspense>` boundary |
 | `error.tsx` | Error boundary for a route segment | Must be a Client Component (`"use client"`) |
 | `not-found.tsx` | 404 UI for a route segment | Triggered by `notFound()` or unmatched URLs |
+| `forbidden.tsx` | 403 UI for a route segment | Triggered by `forbidden()` from `next/navigation`; requires `experimental.authInterrupts: true` |
 | `route.ts` | API Route Handler | Export named HTTP method functions |
 | `template.tsx` | Like layout but re-renders on navigation | Use when you need remounting behavior |
 | `global-error.tsx` | Root-level error boundary | Catches errors in the root layout |
 | `default.tsx` | Fallback for parallel route segments | Required when using parallel routes |
 
-Status in this codebase: `page.tsx` (7), `layout.tsx` (4, incl. route-group layouts), `loading.tsx` (1), `route.ts` (2). `error.tsx` and `not-found.tsx` are not yet implemented — add them for robust error handling.
+Status in this codebase: `page.tsx` (7), `layout.tsx` (4, incl. route-group layouts), `loading.tsx` (1), `route.ts` (2), root `not-found.tsx` + root `forbidden.tsx` (both live in `src/app/` and are session-aware). `error.tsx` and `global-error.tsx` are not yet implemented.
+
+### Session-aware error pages (404 / 403)
+
+- Root `src/app/not-found.tsx` (any unmatched URL) and `src/app/forbidden.tsx` (auth interruption) render the shared `src/components/error-page.tsx` shell — a centered `min-h-svh` flex column with a serif `h1` title and a children slot.
+- The action link is session-aware via `src/components/session-home-link.tsx`: an async Server Component wrapping `await connection()` + `await auth()` and resolving `homePathFor(session !== null)` from `src/routes.ts` (`/` authed, `/landing` signed out). Because it reads the session, it ships inside a `<Suspense>`;
+- The Suspense fallback is a disabled `<Button>` (`HomeLinkFallback`) — never a link — so the prerendered static shell doesn't flash the wrong destination while the session resolves. This is the same PPR dynamic-hole pattern as `AppNavigation`/`HydrateClient`.
+- `forbidden()` requires `experimental.authInterrupts: true` in `next.config.ts` (in the installed Next 16.2.4 this sets `__NEXT_EXPERIMENTAL_AUTH_INTERRUPTS`). There is no `forbidden.tsx` in the `(admin)` group, so a `forbidden()` from the admin layout bubbles to the root boundary automatically.
 
 ### Parallel and Intercepting Routes
 
@@ -122,14 +130,14 @@ Status in this codebase: `page.tsx` (7), `layout.tsx` (4, incl. route-group layo
 - Used for authentication checks, redirects, maintenance mode, and route protection.
 - Export a default function and a `config` object with a `matcher` pattern.
 - Do not create a `middleware.ts` file — use `proxy.ts`.
-- Route vocabulary lives in `src/routes.ts`: `publicRoutes`, `authRoutes`, `adminRoutes`, `apiAuthPrefix`, `DEFAULT_LOGIN_REDIRECT`. Proxy rules: auth routes redirect signed-in users to `DEFAULT_LOGIN_REDIRECT`; signed-in users on `/landing` are sent to `/`; anyone else on a non-public, non-auth route is sent to `/landing`.
+- Route vocabulary lives in `src/routes.ts`: `LANDING_PATH` (`/landing`), `publicRoutes`, `authRoutes`, `adminRoutes`, `apiAuthPrefix`, `DEFAULT_LOGIN_REDIRECT`, and `homePathFor(isLoggedIn)` (the session-aware home/dashboard link used by error pages). Proxy rules: auth routes redirect signed-in users to `DEFAULT_LOGIN_REDIRECT`; signed-in users on `/landing` are sent to `/`; anyone else on a non-public, non-auth route is sent to `/landing`.
 
 ### Route groups & layout composition
 
 - URL-transparent route groups give each app area its own layout and access rules:
   - `(marketing)/` — `MarketingHeader` (logo → `/landing`, Sign In + Get Started → `/auth`); hosts `/landing` and `/maintenance`.
   - `(app)/` — the `NavigationBar` (client) with auth-aware items; hosts `/` (dashboard) and `/posts`.
-  - `(admin)/` — placeholder shell; hosts `/admin`.
+  - `(admin)/` — guarded shell; hosts `/admin`. The layout wraps children in `<Suspense fallback={null}><AdminGate/></Suspense>`, where `AdminGate` (`src/components/admin-gate.tsx`) awaits `connection()` + `auth()` and calls `forbidden()` from `next/navigation` unless `session.user.roles` includes `ADMIN` — rendering the global 403. The role check uses the session's stamped roles, not a fresh DB read; signed-out visitors never reach the gate because the proxy redirects them off `/admin` first.
   - Root `layout.tsx` keeps only shared providers (`TRPCReactProvider`, `ThemeProvider`, fonts, metadata) — never route nav.
 - **A route group's root is the parent path**: `(app)/page.tsx` and `(admin)/page.tsx` both resolve to `/`. Two root-level groups can't each have a `page.tsx`; nest an extra segment (`(admin)/admin/page.tsx`) instead.
 - **Auth-aware nav must stay a PPR dynamic hole**: an `async` layout calling `auth()` makes the whole route dynamic, and with `cacheComponents` the build fails ("Uncached data was accessed outside of <Suspense>", surfaced at the root providers). Instead wrap the nav in `<Suspense>` and put `await connection()` + `await auth()` inside an async server component (`src/components/app-navigation.tsx`). The static shell prerenders with the fallback nav; the session-aware items stream in as the dynamic hole.
