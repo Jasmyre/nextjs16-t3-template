@@ -11,6 +11,8 @@
 - Authentication forms use Zod schemas and React Hook Form. The theme is managed with `next-themes`.
 - Authorization is enforced at the controller tier via the permissions module (`src/server/permissions.ts`) and the `permissionProcedure` tRPC guard; services stay focused on domain rules and never evaluate permissions.
 
+> Visibility-scoping exception (documented): for `post.list`, the coarse gate stays in the controller (`permissionProcedure("Post", "view")`), but the row-visibility decision (USER sees own; MODERATOR/ADMIN see all) lives in the service (`list(user)`), which inspects `user.roles` to choose `listAllPosts()` vs `listPostsByAuthor(user.id)`. This is a list-scope rule with no single row to test in `hasPermission`, so it's treated as a domain visibility rule rather than a row-level grant. The permission module's `view` action remains a role grant only.
+
 ## Permissions (ABAC)
 
 Single reusable module `src/server/permissions.ts` (server-only), demonstrated on the `Post` resource.

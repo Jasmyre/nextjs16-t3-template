@@ -11,6 +11,8 @@ const {
   getByIdMock,
   updateMock,
   removeMock,
+  listMock,
+  getByIdWithAuthorMock,
 } = vi.hoisted(() => ({
   greetMock: vi.fn(),
   createMock: vi.fn(),
@@ -18,6 +20,8 @@ const {
   getByIdMock: vi.fn(),
   updateMock: vi.fn(),
   removeMock: vi.fn(),
+  listMock: vi.fn(),
+  getByIdWithAuthorMock: vi.fn(),
 }));
 
 vi.mock("@/services/post-service", () => ({
@@ -27,6 +31,8 @@ vi.mock("@/services/post-service", () => ({
   getById: getByIdMock,
   update: updateMock,
   remove: removeMock,
+  list: listMock,
+  getByIdWithAuthor: getByIdWithAuthorMock,
 }));
 
 vi.mock("@/auth", () => ({
@@ -46,6 +52,8 @@ const makeUser = (id: string, roles: RoleName[]): Session["user"] => ({
 
 const ownPost = { id: 1, name: "My post", authorId: "user-1" };
 const otherPost = { id: 2, name: "Their post", authorId: "user-2" };
+const ownPostWithAuthor = { ...ownPost, author: { name: "My name" } };
+const otherPostWithAuthor = { ...otherPost, author: { name: "Their name" } };
 
 describe("post router", () => {
   let caller: ReturnType<typeof createCaller>;
@@ -77,6 +85,8 @@ describe("post router", () => {
     getByIdMock.mockReset();
     updateMock.mockReset();
     removeMock.mockReset();
+    listMock.mockReset();
+    getByIdWithAuthorMock.mockReset();
   });
 
   it("returns a greeting for the hello query", async () => {
@@ -221,6 +231,79 @@ describe("post router", () => {
         code: "UNAUTHORIZED",
       });
       expect(removeMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("list", () => {
+    it("returns the user's own posts", async () => {
+      listMock.mockResolvedValue([ownPostWithAuthor]);
+      const result = await authedCaller.post.list();
+      expect(result).toEqual([ownPostWithAuthor]);
+      expect(listMock).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "user-1", roles: ["USER"] })
+      );
+    });
+
+    it("returns all posts for a moderator", async () => {
+      listMock.mockResolvedValue([ownPostWithAuthor, otherPostWithAuthor]);
+      const result = await moderatorCaller.post.list();
+      expect(result).toEqual([ownPostWithAuthor, otherPostWithAuthor]);
+      expect(listMock).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "user-4", roles: ["MODERATOR"] })
+      );
+    });
+
+    it("returns all posts for an admin", async () => {
+      listMock.mockResolvedValue([ownPostWithAuthor, otherPostWithAuthor]);
+      const result = await adminCaller.post.list();
+      expect(result).toEqual([ownPostWithAuthor, otherPostWithAuthor]);
+      expect(listMock).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "user-3", roles: ["ADMIN"] })
+      );
+    });
+
+    it("rejects an unauthenticated list", async () => {
+      await expect(caller.post.list()).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      expect(listMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getById", () => {
+    it("returns a single post with its author", async () => {
+      getByIdWithAuthorMock.mockResolvedValue(ownPostWithAuthor);
+      const result = await authedCaller.post.getById({ id: 1 });
+      expect(result).toEqual(ownPostWithAuthor);
+      expect(getByIdWithAuthorMock).toHaveBeenCalledWith(1);
+    });
+
+    it("returns a post for a moderator", async () => {
+      getByIdWithAuthorMock.mockResolvedValue(otherPostWithAuthor);
+      const result = await moderatorCaller.post.getById({ id: 2 });
+      expect(result).toEqual(otherPostWithAuthor);
+      expect(getByIdWithAuthorMock).toHaveBeenCalledWith(2);
+    });
+
+    it("returns a post for an admin", async () => {
+      getByIdWithAuthorMock.mockResolvedValue(otherPostWithAuthor);
+      const result = await adminCaller.post.getById({ id: 2 });
+      expect(result).toEqual(otherPostWithAuthor);
+      expect(getByIdWithAuthorMock).toHaveBeenCalledWith(2);
+    });
+
+    it("rejects when the post does not exist", async () => {
+      getByIdWithAuthorMock.mockResolvedValue(null);
+      await expect(
+        authedCaller.post.getById({ id: 404 })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("rejects an unauthenticated getById", async () => {
+      await expect(caller.post.getById({ id: 1 })).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      expect(getByIdWithAuthorMock).not.toHaveBeenCalled();
     });
   });
 

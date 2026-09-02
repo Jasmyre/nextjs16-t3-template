@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   createPostSchema,
   deletePostSchema,
+  postIdSchema,
   updatePostSchema,
 } from "@/schemas/post-schema";
 import {
@@ -15,8 +16,10 @@ import { hasPermission } from "@/server/permissions";
 import {
   create,
   getById,
+  getByIdWithAuthor,
   getLatest,
   greet,
+  list,
   remove,
   update,
 } from "@/services/post-service";
@@ -31,6 +34,25 @@ export const postRouter = createTRPCRouter({
   create: permissionProcedure("Post", "create")
     .input(createPostSchema)
     .mutation(({ ctx, input }) => create(input.name, ctx.user.id)),
+
+  list: permissionProcedure("Post", "view").query(async ({ ctx }) =>
+    list(ctx.user)
+  ),
+
+  getById: permissionProcedure("Post", "view")
+    .input(z.object({ id: postIdSchema }))
+    .query(async ({ input }) => {
+      const post = await getByIdWithAuthor(input.id);
+
+      if (!post) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Post not found.",
+        });
+      }
+
+      return post;
+    }),
 
   update: permissionProcedure("Post", "update")
     .input(updatePostSchema)
