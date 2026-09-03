@@ -18,12 +18,12 @@ export default defineConfig({
   projects: [
     {
       name: "setup",
-      testMatch: /setup\/auth\.setup\.ts/,
+      testMatch: /setup\/.+\.setup\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "chromium",
-      testMatch: /auth-authed\.spec\.ts/,
+      testMatch: /(auth-authed|posts|landing-authed|errors-authed)\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "tests/e2e/.auth/user.json",
@@ -32,8 +32,17 @@ export default defineConfig({
     },
     {
       name: "chromium-logged-out",
-      testMatch: /auth\.spec\.ts/,
+      testMatch: /(auth|landing)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "chromium-admin",
+      testMatch: /admin\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "tests/e2e/.auth/admin.json",
+      },
+      dependencies: ["setup"],
     },
   ],
   webServer: {
