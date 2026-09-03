@@ -1,25 +1,14 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PostList } from "@/components/post-list";
+import { api, HydrateClient } from "@/trpc/server";
 
-export default function PostsPage() {
+export default async function PostsPage() {
+  await api.post.list.prefetch();
+
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Posts</CardTitle>
-          <CardDescription>Your posts will land here.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">
-            This placeholder will become a full post list with actions.
-          </p>
-        </CardContent>
-      </Card>
+      <HydrateClient>
+        <PostList />
+      </HydrateClient>
     </main>
   );
 }
