@@ -59,7 +59,6 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
-        aria-description={props["aria-description"]}
         data-slot="sheet-content"
         data-side={side}
         className={cn(
@@ -115,7 +114,7 @@ function SheetTitle({
     <SheetPrimitive.Title
       data-slot="sheet-title"
       className={cn(
-        "font-heading text-base font-medium text-foreground",
+        "text-base font-medium text-foreground",
         className
       )}
       {...props}
