@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewPostLoading() {
   return (
-    <main className="container mx-auto max-w-2xl px-4 py-8">
+    <main className="container mx-auto max-w-7xl px-4 py-8">
       <Card>
         <CardHeader>
           <Skeleton className="h-5 w-28" />

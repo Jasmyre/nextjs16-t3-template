@@ -9,7 +9,7 @@ import {
 
 export default function NewPostPage() {
   return (
-    <main className="container mx-auto max-w-2xl px-4 py-8">
+    <main className="container mx-auto max-w-7xl px-4 py-8">
       <Card>
         <CardHeader>
           <CardTitle>New Post</CardTitle>
