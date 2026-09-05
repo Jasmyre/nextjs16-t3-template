@@ -69,7 +69,13 @@ const getCommandItems = (items: NavMainItem[]) =>
     ];
   });
 
-export function NavMain({ items }: { items: NavMainItem[] }) {
+export function NavMain({
+  groupLabel = "Navigation",
+  items,
+}: {
+  groupLabel?: string;
+  items: NavMainItem[];
+}) {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -159,7 +165,7 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
 
       <SidebarGroup>
         <SidebarGroupLabel className="text-muted-foreground">
-          Navigation
+          {groupLabel}
         </SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => {

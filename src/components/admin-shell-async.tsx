@@ -1,11 +1,11 @@
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { auth } from "@/auth";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import type { NavMainItem } from "@/components/nav-main";
 import { mapSessionToNavUser } from "@/lib/shell";
 
-export async function AppShellAsync({
+export async function AdminShellAsync({
   children,
   navItems,
 }: {
@@ -15,20 +15,12 @@ export async function AppShellAsync({
   await connection();
 
   const session = await auth();
-  const isAdmin = session?.user.roles.includes("ADMIN") ?? false;
-
-  const resolvedNavItems: NavMainItem[] = [
-    ...navItems,
-    ...(isAdmin && !navItems.some((item) => item.url === "/admin")
-      ? [{ title: "Admin", url: "/admin" }]
-      : []),
-  ];
 
   const user = mapSessionToNavUser(session?.user);
 
   return (
-    <AppShell navItems={resolvedNavItems} user={user}>
+    <AdminShell navItems={navItems} user={user}>
       {children}
-    </AppShell>
+    </AdminShell>
   );
 }

@@ -11,25 +11,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { getSectionTitle } from "@/lib/shell";
 
 const sectionTitleMap: Record<string, string> = {
   "/": "Home",
   "/posts": "Posts",
   "/posts/new": "New Post",
 };
-
-function getSectionTitle(pathname: string): string {
-  const direct = sectionTitleMap[pathname];
-  if (direct) {
-    return direct;
-  }
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length === 0) {
-    return "Home";
-  }
-  const last = segments.at(-1) ?? "Home";
-  return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
-}
 
 export function AppShell({
   children,
@@ -41,7 +29,7 @@ export function AppShell({
   user?: NavUserData | null;
 }) {
   const pathname = usePathname();
-  const title = getSectionTitle(pathname);
+  const title = getSectionTitle(pathname, sectionTitleMap, "Home");
 
   return (
     <SidebarProvider>

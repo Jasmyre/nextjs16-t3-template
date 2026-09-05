@@ -12,11 +12,17 @@ import {
 } from "@/components/ui/sidebar";
 
 interface MainSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  groupLabel?: string;
   navItems: NavMainItem[];
   user?: NavUserData | null;
 }
 
-export function MainSidebar({ navItems, user, ...props }: MainSidebarProps) {
+export function MainSidebar({
+  groupLabel,
+  navItems,
+  user,
+  ...props
+}: MainSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="bg-background">
@@ -24,7 +30,7 @@ export function MainSidebar({ navItems, user, ...props }: MainSidebarProps) {
       </SidebarHeader>
       <Separator />
       <SidebarContent className="bg-background">
-        <NavMain items={navItems} />
+        <NavMain groupLabel={groupLabel} items={navItems} />
       </SidebarContent>
       <SidebarFooter className="bg-background">
         <SidebarFooterContent user={user} />
