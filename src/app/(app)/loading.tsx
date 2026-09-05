@@ -14,9 +14,9 @@ export default function DashboardLoading() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-[5.5rem] rounded-xl" />
-          <Skeleton className="h-[5.5rem] rounded-xl" />
-          <Skeleton className="h-[5.5rem] rounded-xl" />
+          <Skeleton className="h-22 rounded-xl" />
+          <Skeleton className="h-22 rounded-xl" />
+          <Skeleton className="h-22 rounded-xl" />
         </div>
 
         <Card>
