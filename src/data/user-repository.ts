@@ -5,6 +5,8 @@ import { db } from "@/server/db";
 
 export type UserWithRoles = User & { roles: Role[] };
 
+export const DEFAULT_ROLE = "USER" as const;
+
 const withRoles = {
   roles: true,
 } as const;
@@ -56,6 +58,14 @@ export const createUser = async (data: {
 }): Promise<User> =>
   db.user.create({
     data,
+  });
+
+export const assignDefaultRole = async (userId: string): Promise<User> =>
+  db.user.update({
+    where: { id: userId },
+    data: {
+      roles: { connect: { name: DEFAULT_ROLE } },
+    },
   });
 
 export const updateEmailVerification = async (userId: string): Promise<User> =>

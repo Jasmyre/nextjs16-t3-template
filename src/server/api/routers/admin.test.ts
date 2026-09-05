@@ -139,8 +139,18 @@ describe("admin router", () => {
 
     it("rejects an invalid role name", async () => {
       await expect(
-        // @ts-expect-error - testing invalid input shape
-        adminCaller.admin.updateRoles({ userId: "user-1", roleNames: ["ROOT"] })
+        adminCaller.admin.updateRoles({
+          userId: "user-1",
+          // @ts-expect-error - testing invalid input shape
+          roleNames: ["ROOT"],
+        })
+      ).rejects.toBeInstanceOf(Error);
+      expect(updateRolesMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects an empty roleNames array", async () => {
+      await expect(
+        adminCaller.admin.updateRoles({ userId: "user-1", roleNames: [] })
       ).rejects.toBeInstanceOf(Error);
       expect(updateRolesMock).not.toHaveBeenCalled();
     });

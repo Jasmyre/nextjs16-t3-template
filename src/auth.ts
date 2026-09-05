@@ -1,7 +1,8 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
-import { getUserById, updateEmailVerification } from "@/data/user-repository";
+import { authEvents } from "@/auth-events";
+import { getUserById } from "@/data/user-repository";
 import { db } from "@/server/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -9,15 +10,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/auth",
     error: "/auth/error",
   },
-  events: {
-    async linkAccount({ user }) {
-      if (!user.id) {
-        return;
-      }
-
-      await updateEmailVerification(user.id);
-    },
-  },
+  events: authEvents,
   callbacks: {
     redirect({ baseUrl }) {
       return baseUrl;

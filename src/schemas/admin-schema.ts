@@ -3,5 +3,5 @@ import z from "zod";
 
 export const updateRolesSchema = z.object({
   userId: z.string().min(1),
-  roleNames: z.array(z.nativeEnum(RoleName)),
+  roleNames: z.array(z.nativeEnum(RoleName)).min(1),
 });

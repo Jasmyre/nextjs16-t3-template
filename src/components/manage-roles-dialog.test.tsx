@@ -78,9 +78,7 @@ describe("ManageRolesDialog", () => {
     expect(onSaveMock).not.toHaveBeenCalled();
   });
 
-  it("deselects a role that was initially assigned", async () => {
-    const user = userEvent.setup();
-
+  it("disables toggling off the last remaining role", () => {
     render(
       <ManageRolesDialog
         onOpenChange={vi.fn()}
@@ -90,11 +88,36 @@ describe("ManageRolesDialog", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: "Toggle USER" }));
+    const userToggle = screen.getByRole("button", { name: "Toggle USER" });
+    expect(userToggle).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Toggle MODERATOR" })
+    ).toBeEnabled();
+  });
+
+  it("deselects a role that was initially assigned", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ManageRolesDialog
+        onOpenChange={vi.fn()}
+        onSave={onSaveMock}
+        open={true}
+        user={{
+          ...mockUser,
+          roles: [
+            { id: 1, name: "USER" as const },
+            { id: 2, name: "MODERATOR" as const },
+          ],
+        }}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Toggle MODERATOR" }));
 
     const saveButton = screen.getByRole("button", { name: "Save" });
     await user.click(saveButton);
 
-    expect(onSaveMock).toHaveBeenCalledWith("user-1", []);
+    expect(onSaveMock).toHaveBeenCalledWith("user-1", ["USER"]);
   });
 });

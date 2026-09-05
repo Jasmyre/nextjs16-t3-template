@@ -3,9 +3,11 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import bcrypt from "bcryptjs";
 import "server-only";
 
-import { createUser, getUserByEmail } from "@/data/user-repository";
-
-const DEFAULT_ROLE = "USER" as const;
+import {
+  createUser,
+  DEFAULT_ROLE,
+  getUserByEmail,
+} from "@/data/user-repository";
 
 export type RegisterResult =
   | { ok: true; userId: string }

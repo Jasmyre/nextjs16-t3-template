@@ -62,14 +62,17 @@ export function ManageRolesDialog({
         <div className="flex flex-col gap-2">
           {roleOptions.map((role) => {
             const active = selected.includes(role);
+            const isOnlyRole = active && selected.length === 1;
             return (
               <button
                 aria-label={`Toggle ${role}`}
                 aria-pressed={active}
                 className={cn(
                   "flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
-                  active ? "border-primary/60 bg-primary/10" : "hover:bg-muted"
+                  active ? "border-primary/60 bg-primary/10" : "hover:bg-muted",
+                  isOnlyRole && "cursor-not-allowed opacity-60"
                 )}
+                disabled={isOnlyRole}
                 key={role}
                 onClick={() => toggle(role)}
                 type="button"

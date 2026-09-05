@@ -13,6 +13,8 @@ vi.mock("@/data/user-repository", () => ({
 
 import { listUsers, updateRoles } from "@/services/admin-service";
 
+const EMPTY_ROLES_MESSAGE = /at least one role/i;
+
 const user = (id: string, roles: RoleName[]) => ({
   id,
   name: `User ${id}`,
@@ -79,6 +81,22 @@ describe("admin service", () => {
           roleNames: ["USER"],
         })
       ).resolves.toEqual(updated);
+    });
+
+    it("rejects an empty roleNames array", async () => {
+      await expect(
+        updateRoles({
+          callerId: "admin-1",
+          callerRoles: ["ADMIN"],
+          userId: "target-1",
+          roleNames: [],
+        })
+      ).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+        message: expect.stringMatching(EMPTY_ROLES_MESSAGE),
+      });
+
+      expect(updateUserRolesMock).not.toHaveBeenCalled();
     });
   });
 });

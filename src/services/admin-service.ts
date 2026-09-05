@@ -17,6 +17,13 @@ export const updateRoles = async ({
   userId: string;
   roleNames: RoleName[];
 }) => {
+  if (roleNames.length === 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "A user must have at least one role.",
+    });
+  }
+
   const callerIsAdmin = callerRoles.includes("ADMIN");
   const isRemovingOwnAdmin =
     userId === callerId && callerIsAdmin && !roleNames.includes("ADMIN");
