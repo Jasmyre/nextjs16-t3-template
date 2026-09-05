@@ -1,21 +1,23 @@
 import { type ReactNode, Suspense } from "react";
-import { AppNavBar, AppNavigation } from "@/components/app-navigation";
-import type { NavItem } from "@/components/navigation-bar";
+import { AppShell } from "@/components/app-shell";
+import { AppShellAsync } from "@/components/app-shell-async";
+import type { NavMainItem } from "@/components/nav-main";
 
-const baseNavItems: NavItem[] = [
-  { name: "Dashboard", href: "/" },
-  { name: "Posts", href: "/posts" },
+const baseNavItems: NavMainItem[] = [
+  { title: "Home", url: "/" },
+  { title: "Posts", url: "/posts" },
 ];
 
 export default function AppLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <>
-      <Suspense fallback={<AppNavBar navItems={baseNavItems} />}>
-        <AppNavigation navItems={baseNavItems} />
+    <div className="min-h-svh bg-background">
+      <Suspense
+        fallback={<AppShell navItems={baseNavItems}>{children}</AppShell>}
+      >
+        <AppShellAsync navItems={baseNavItems}>{children}</AppShellAsync>
       </Suspense>
-      {children}
-    </>
+    </div>
   );
 }

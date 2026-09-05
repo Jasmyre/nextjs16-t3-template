@@ -6,16 +6,19 @@ test.describe("authenticated flows", () => {
     await expect(page).toHaveURL("/");
   });
 
-  test("an authenticated user sees the user menu", async ({ page }) => {
+  test("an authenticated user sees the sidebar user menu", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "User menu" }).click();
-    await expect(page.getByText("My Account")).toBeVisible();
+    await expect(page.getByText("E2E User")).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Log out" })).toBeVisible();
   });
 
-  test("an authenticated user can sign out", async ({ page }) => {
+  test("an authenticated user can sign out from the user menu", async ({
+    page,
+  }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "User menu" }).click();
-    await page.getByRole("button", { name: "Log out" }).click();
+    await page.getByRole("menuitem", { name: "Log out" }).click();
 
     await expect(page).toHaveURL("/landing");
 
