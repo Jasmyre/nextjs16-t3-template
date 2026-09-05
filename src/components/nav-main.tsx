@@ -83,7 +83,10 @@ export function NavMain({
   const router = useRouter();
   const commandItems = getCommandItems(items);
 
-  const isCurrentPath = (url: string) => pathname === url;
+  const isCurrentPath = (url: string) =>
+    url === "/"
+      ? pathname === url
+      : pathname === url || pathname.startsWith(`${url}/`);
 
   useEffect(() => {
     setMounted(true);
