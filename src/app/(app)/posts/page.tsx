@@ -5,7 +5,7 @@ export default async function PostsPage() {
   await api.post.list.prefetch();
 
   return (
-    <main className="container mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto w-full max-w-7xl px-4 py-10">
       <HydrateClient>
         <PostList />
       </HydrateClient>

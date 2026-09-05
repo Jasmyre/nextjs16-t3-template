@@ -70,10 +70,11 @@ export function PostCreateForm() {
           )}
         />
         <FormError message={formError} />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
           <Button
             asChild
-            className="cursor-pointer"
+            className="cursor-pointer text-muted-foreground hover:text-foreground"
+            size="sm"
             type="button"
             variant="ghost"
           >

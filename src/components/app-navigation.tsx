@@ -3,14 +3,7 @@ import { auth } from "@/auth";
 import { type NavItem, NavigationBar } from "@/components/navigation-bar";
 
 export function AppNavBar({ navItems }: { navItems: NavItem[] }) {
-  return (
-    <NavigationBar
-      enableBlock
-      navItems={navItems}
-      pageItems={navItems}
-      title="Template"
-    />
-  );
+  return <NavigationBar enableBlock navItems={navItems} title="Template" />;
 }
 
 export async function AppNavigation({ navItems }: { navItems: NavItem[] }) {
