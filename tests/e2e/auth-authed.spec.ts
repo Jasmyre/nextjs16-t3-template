@@ -9,7 +9,7 @@ test.describe("authenticated flows", () => {
   test("an authenticated user sees the sidebar user menu", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "User menu" }).click();
-    await expect(page.getByText("E2E User")).toBeVisible();
+    await expect(page.getByRole("menu").getByText("E2E User")).toBeVisible();
     await expect(page.getByRole("menuitem", { name: "Log out" })).toBeVisible();
   });
 
