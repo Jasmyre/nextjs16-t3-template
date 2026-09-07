@@ -2,8 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import type * as z from "zod";
-import { LogInSchema } from "@/schemas/auth-schema";
+import { SignInSchema } from "@/schemas/auth-schema";
 import { verifyCredentials } from "@/services/auth-service";
 import { env } from "./env";
 
@@ -28,12 +27,10 @@ export default {
     }),
     Credentials({
       async authorize(credentials) {
-        const validatedFields = LogInSchema.safeParse(credentials);
+        const validatedFields = SignInSchema.safeParse(credentials);
 
         if (validatedFields.success) {
-          const { email, password } = validatedFields.data as z.infer<
-            typeof LogInSchema
-          >;
+          const { email, password } = validatedFields.data;
 
           const user = await verifyCredentials(email, password);
 

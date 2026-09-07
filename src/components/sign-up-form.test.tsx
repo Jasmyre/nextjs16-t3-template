@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SignupForm } from "@/components/sign-up-form";
+import { SignUpForm } from "@/components/sign-up-form";
 
-const { registerMock } = vi.hoisted(() => ({ registerMock: vi.fn() }));
+const { signUpMock } = vi.hoisted(() => ({ signUpMock: vi.fn() }));
 
-vi.mock("@/actions/register", () => ({
-  register: registerMock,
+vi.mock("@/actions/sign-up", () => ({
+  signUp: signUpMock,
 }));
 
 const nameInput = (): HTMLElement =>
@@ -15,14 +15,14 @@ const emailInput = (): HTMLElement =>
   screen.getByPlaceholderText("johndoe@example.com");
 const passwordInput = (): HTMLElement => screen.getByPlaceholderText("******");
 
-describe("SignupForm", () => {
+describe("SignUpForm", () => {
   beforeEach(() => {
-    registerMock.mockReset();
-    registerMock.mockResolvedValue({ success: "User created!" });
+    signUpMock.mockReset();
+    signUpMock.mockResolvedValue({ success: "User created!" });
   });
 
   it("renders name, email, password and a sign-up button", () => {
-    render(<SignupForm />);
+    render(<SignUpForm />);
     expect(screen.getByPlaceholderText("Johnny Bravo")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("johndoe@example.com")
@@ -31,9 +31,9 @@ describe("SignupForm", () => {
     expect(screen.getByRole("button", { name: "Sign Up" })).toBeInTheDocument();
   });
 
-  it("submits the entered values to the register action", async () => {
+  it("submits the entered values to the sign-up action", async () => {
     const user = userEvent.setup();
-    render(<SignupForm />);
+    render(<SignUpForm />);
 
     await user.type(nameInput(), "Johnny Bravo");
     await user.type(emailInput(), "johnny@example.com");
@@ -41,7 +41,7 @@ describe("SignupForm", () => {
     await user.click(screen.getByRole("button", { name: "Sign Up" }));
 
     await waitFor(() => {
-      expect(registerMock).toHaveBeenCalledWith({
+      expect(signUpMock).toHaveBeenCalledWith({
         name: "Johnny Bravo",
         email: "johnny@example.com",
         password: "secret123",
@@ -49,10 +49,10 @@ describe("SignupForm", () => {
     });
   });
 
-  it("shows the error message returned by the register action", async () => {
-    registerMock.mockResolvedValue({ error: "User already exists!" });
+  it("shows the error message returned by the sign-up action", async () => {
+    signUpMock.mockResolvedValue({ error: "User already exists!" });
     const user = userEvent.setup();
-    render(<SignupForm />);
+    render(<SignUpForm />);
 
     await user.type(nameInput(), "Johnny Bravo");
     await user.type(emailInput(), "johnny@example.com");
@@ -62,9 +62,9 @@ describe("SignupForm", () => {
     expect(await screen.findByText("User already exists!")).toBeInTheDocument();
   });
 
-  it("shows the success message returned by the register action", async () => {
+  it("shows the success message returned by the sign-up action", async () => {
     const user = userEvent.setup();
-    render(<SignupForm />);
+    render(<SignUpForm />);
 
     await user.type(nameInput(), "Johnny Bravo");
     await user.type(emailInput(), "johnny@example.com");

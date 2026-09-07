@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
-import { FormError } from "@/components/form-error";
+import { FormNotice } from "@/components/form-notice";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -69,7 +69,7 @@ export function PostCreateForm() {
             </FormItem>
           )}
         />
-        <FormError message={formError} />
+        <FormNotice error={formError} />
         <div className="flex items-center justify-between gap-3">
           <Button
             asChild

@@ -2,10 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type * as z from "zod";
-import { signUp } from "@/actions/sign-up";
+import { signIn } from "@/actions/sign-in";
 import { FormNotice } from "@/components/form-notice";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -21,29 +22,34 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { SignUpSchema } from "@/schemas/auth-schema";
+import { SignInSchema } from "@/schemas/auth-schema";
 
-export const SignUpForm = () => {
+export const SignInForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>(undefined);
   const [success, setSuccess] = useState<string | undefined>(undefined);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const form = useForm<z.infer<typeof SignUpSchema>>({
-    resolver: zodResolver(SignUpSchema),
+  const searchParams = useSearchParams();
+  const urlError =
+    searchParams.get("error") === "OAuthAccountNotLinked"
+      ? "Email already in use with different provider!"
+      : "";
+
+  const form = useForm<z.infer<typeof SignInSchema>>({
+    resolver: zodResolver(SignInSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (values: z.infer<typeof SignUpSchema>): void => {
+  const onSubmit = (values: z.infer<typeof SignInSchema>): void => {
     setSuccess("");
     setError("");
 
     startTransition(async () => {
-      await signUp(values).then((data) => {
+      await signIn(values).then((data) => {
         setSuccess(data?.success);
         setError(data?.error);
       });
@@ -54,24 +60,6 @@ export const SignUpForm = () => {
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <FieldSet>
         <FieldGroup>
-          <Controller
-            control={form.control}
-            name="name"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>Name:</FieldLabel>
-                <InputGroup>
-                  <InputGroupInput
-                    {...field}
-                    disabled={isPending}
-                    placeholder="Johnny Bravo"
-                    type="text"
-                  />
-                </InputGroup>
-                {fieldState.error && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
           <Controller
             control={form.control}
             name="email"
@@ -125,7 +113,7 @@ export const SignUpForm = () => {
             )}
           />
 
-          <FormNotice error={error} success={success} />
+          <FormNotice error={error ?? urlError} success={success} />
 
           <Field>
             <ButtonGroup>
@@ -135,7 +123,7 @@ export const SignUpForm = () => {
                 type="submit"
                 variant={"default"}
               >
-                Sign Up
+                Sign In
               </Button>
             </ButtonGroup>
           </Field>

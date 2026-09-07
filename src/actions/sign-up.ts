@@ -2,19 +2,17 @@
 
 import type * as z from "zod";
 
-import { registerSchema } from "@/schemas/auth-schema";
+import { SignUpSchema } from "@/schemas/auth-schema";
 import { registerUser } from "@/services/auth-service";
 
-export const register = async (values: z.infer<typeof registerSchema>) => {
-  const validatedFields = registerSchema.safeParse(values);
+export const signUp = async (values: z.infer<typeof SignUpSchema>) => {
+  const validatedFields = SignUpSchema.safeParse(values);
 
   if (!validatedFields.success) {
     return { error: "Invalid fields!" };
   }
 
-  const { name, email, password } = validatedFields.data as z.infer<
-    typeof registerSchema
-  >;
+  const { name, email, password } = validatedFields.data;
 
   try {
     const result = await registerUser({ name, email, password });

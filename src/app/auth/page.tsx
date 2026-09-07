@@ -1,7 +1,7 @@
 import { FaGithub, FaGoogle } from "react-icons/fa";
 import { AuthProviderButton } from "@/components/auth-provider-button";
-import { LogInForm } from "@/components/login-form";
-import { SignupForm } from "@/components/sign-up-form";
+import { SignInForm } from "@/components/sign-in-form";
+import { SignUpForm } from "@/components/sign-up-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,13 +36,13 @@ export default function AuthPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="signin">
-              <LogInForm />
+              <SignInForm />
               <Button className="mt-2 cursor-pointer p-0" variant="link">
                 Forgot password?
               </Button>
             </TabsContent>
             <TabsContent value="signup">
-              <SignupForm />
+              <SignUpForm />
               <br />
             </TabsContent>
           </Tabs>
