@@ -9,10 +9,7 @@ export default function Loading({
 }: Readonly<{ children?: ReactNode; className?: string }>): JSX.Element {
   return (
     <Skeleton
-      className={cn(
-        "h-4 w-full rounded-md bg-gray-300 dark:bg-gray-700",
-        className
-      )}
+      className={cn("h-4 w-full rounded-md bg-muted", className)}
       {...props}
     >
       {children}

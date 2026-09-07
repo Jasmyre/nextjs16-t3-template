@@ -49,8 +49,8 @@ export default function AuthPage() {
 
           <div className="mt-6 flex flex-col gap-10">
             <div className="relative">
-              <Separator className="absolute top-[50%] bottom-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-gray-400" />
-              <span className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-card px-4 text-gray-800 dark:text-gray-400">
+              <Separator className="absolute top-[50%] bottom-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-border" />
+              <span className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-card px-4 text-muted-foreground">
                 OR CONTINUE WITH
               </span>
             </div>
