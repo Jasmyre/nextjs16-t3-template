@@ -108,7 +108,9 @@ describe("EditPostForm", () => {
 
     expect(mocks.mutateMock).not.toHaveBeenCalled();
     expect(
-      await screen.findByText("String must contain at least 1 character(s)")
+      await screen.findByText(
+        "Too small: expected string to have >=1 characters"
+      )
     ).toBeInTheDocument();
   });
 

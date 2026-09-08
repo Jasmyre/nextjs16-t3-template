@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import type * as z from "zod";
+import type { z } from "zod";
 import { signIn as authSignIn } from "@/auth";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { SignInSchema } from "@/schemas/auth-schema";

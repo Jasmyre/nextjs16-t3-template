@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
-import type * as z from "zod";
+import type { z } from "zod";
 import { signUp } from "@/actions/sign-up";
 import { FormNotice } from "@/components/form-notice";
 import { Button } from "@/components/ui/button";
