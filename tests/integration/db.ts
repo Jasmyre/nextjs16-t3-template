@@ -21,6 +21,6 @@ export async function truncateTables(): Promise<void> {
     return;
   }
   await testDb.$executeRawUnsafe(
-    'TRUNCATE TABLE "User", "Post", "Account" RESTART IDENTITY CASCADE;'
+    'TRUNCATE TABLE "User", "Post", "Account", "PersonalAccessToken" RESTART IDENTITY CASCADE;'
   );
 }
