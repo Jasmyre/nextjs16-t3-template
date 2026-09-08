@@ -9,6 +9,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { Session } from "next-auth";
 import superjson from "superjson";
+import type { OpenApiMeta } from "trpc-to-openapi";
 import { ZodError, z } from "zod";
 import { auth } from "@/auth";
 import { env } from "@/env";
@@ -53,18 +54,21 @@ export const createTRPCContext = async (opts: {
 export const formatZodError = (cause: unknown) =>
   cause instanceof ZodError ? z.flattenError(cause) : null;
 
-const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError: formatZodError(error.cause),
-      },
-    };
-  },
-});
+const t = initTRPC
+  .meta<OpenApiMeta>()
+  .context<typeof createTRPCContext>()
+  .create({
+    transformer: superjson,
+    errorFormatter({ shape, error }) {
+      return {
+        ...shape,
+        data: {
+          ...shape.data,
+          zodError: formatZodError(error.cause),
+        },
+      };
+    },
+  });
 
 /**
  * Create a server-side caller.

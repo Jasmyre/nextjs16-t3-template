@@ -240,6 +240,7 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 - Input validation via Zod schemas (`src/schemas/**`).
 - Export `AppRouter` type for end-to-end type safety.
 - `createCaller` exported for server-side direct calls (used by RSC path).
+- **Strict output contracts on externally exposed Procedures**: every Procedure that will be REST-mounted declares a `z.strictObject` `.output()` from `src/schemas/**` (unknown fields fail loudly, never strip-drift) plus `.meta({ openapi: { method, path, tags, summary, protect } })` for the `trpc-to-openapi` generator (tRPC instance is typed `initTRPC.meta<OpenApiMeta>()`). Date-bearing outputs pin `z.iso.datetime()` — the REST wire shape — and resolvers serialize `Date` → ISO at the controller tier so the contract already holds on tRPC itself. Paths carry the `/api/v1` version prefix; one Tag per Router (`posts`, `dashboard`); `protect: false` only on public reads. Surfaces that stay tRPC-only (e.g. `admin`) are left unannotated and are auto-excluded from the Document.
 
 ### Client-side (`src/trpc/react.tsx`)
 
