@@ -10,6 +10,12 @@ import {
 
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => true }));
 
+const pathnameState = vi.hoisted(() => ({ current: "/" }));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => pathnameState.current,
+}));
+
 // jsdom never reproduces Radix body scroll-lock, so the no-shift contract is
 // asserted at the seam instead: the mobile drawer must render non-modal,
 // which is what keeps `react-remove-scroll` from touching body layout.
@@ -27,8 +33,8 @@ vi.mock("radix-ui", async (importOriginal) => {
   return { ...mod, Dialog: { ...mod.Dialog, Root: RootSpy } };
 });
 
-function renderMobileSidebar() {
-  return render(
+function mobileSidebarTree() {
+  return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <div>Mobile nav</div>
@@ -41,9 +47,14 @@ function renderMobileSidebar() {
   );
 }
 
+function renderMobileSidebar() {
+  return render(mobileSidebarTree());
+}
+
 describe("mobile Sidebar", () => {
   beforeEach(() => {
     rootProps.seen.length = 0;
+    pathnameState.current = "/";
   });
 
   it("renders the drawer non-modal so opening it cannot shift body layout", async () => {
@@ -92,6 +103,22 @@ describe("mobile Sidebar", () => {
     if (backdrop) {
       await user.click(backdrop);
     }
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="sidebar-backdrop"]')
+    ).not.toBeInTheDocument();
+  });
+
+  it("closes the mobile sidebar on navigate", async () => {
+    const user = userEvent.setup();
+    const view = renderMobileSidebar();
+
+    await user.click(screen.getByRole("button", { name: "Toggle Sidebar" }));
+    await screen.findByRole("dialog");
+
+    pathnameState.current = "/posts";
+    view.rerender(mobileSidebarTree());
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(

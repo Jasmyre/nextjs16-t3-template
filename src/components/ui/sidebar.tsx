@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
+import { usePathname } from "next/navigation"
 import { Slot } from "radix-ui"
 
 import { useCloseOnBack } from "@/hooks/use-close-on-back"
@@ -167,6 +168,17 @@ function Sidebar({
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
   useCloseOnBack(isMobile && openMobile, () => setOpenMobile(false))
+
+  const pathname = usePathname()
+  const prevPathnameRef = React.useRef(pathname)
+  React.useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname
+      if (isMobile && openMobile) {
+        setOpenMobile(false)
+      }
+    }
+  }, [pathname, isMobile, openMobile, setOpenMobile])
 
   if (collapsible === "none") {
     return (
