@@ -62,4 +62,29 @@ describe("dashboard router", () => {
     expect(result).toEqual(stats);
     expect(getStatsMock).toHaveBeenCalledWith("user-1");
   });
+
+  it("rejects an out-of-contract stats shape", async () => {
+    getStatsMock.mockResolvedValue({
+      totalUsers: "3",
+      totalPosts: 5,
+      myPosts: 2,
+    });
+
+    await expect(authedCaller.dashboard.getStats()).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+    });
+  });
+
+  it("rejects stats carrying an unknown field", async () => {
+    getStatsMock.mockResolvedValue({
+      totalUsers: 3,
+      totalPosts: 5,
+      myPosts: 2,
+      extra: "drift",
+    });
+
+    await expect(authedCaller.dashboard.getStats()).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+    });
+  });
 });

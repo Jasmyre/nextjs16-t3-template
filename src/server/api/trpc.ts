@@ -9,7 +9,8 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { Session } from "next-auth";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import type { OpenApiMeta } from "trpc-to-openapi";
+import { ZodError, z } from "zod";
 import { auth } from "@/auth";
 import { env } from "@/env";
 import { redis } from "@/lib/redis";
@@ -45,19 +46,29 @@ export const createTRPCContext = async (opts: {
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
-      },
-    };
-  },
-});
+/**
+ * Maps a procedure failure cause to the client-visible validation payload.
+ * Returns the flattened `{ formErrors, fieldErrors }` shape for Zod input
+ * errors and `null` otherwise, so the frontend can narrow on `zodError`.
+ */
+export const formatZodError = (cause: unknown) =>
+  cause instanceof ZodError ? z.flattenError(cause) : null;
+
+const t = initTRPC
+  .meta<OpenApiMeta>()
+  .context<typeof createTRPCContext>()
+  .create({
+    transformer: superjson,
+    errorFormatter({ shape, error }) {
+      return {
+        ...shape,
+        data: {
+          ...shape.data,
+          zodError: formatZodError(error.cause),
+        },
+      };
+    },
+  });
 
 /**
  * Create a server-side caller.

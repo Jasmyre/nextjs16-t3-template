@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
+import type { z } from "zod";
 import { FormNotice } from "@/components/form-notice";
 import { Button } from "@/components/ui/button";
 import {

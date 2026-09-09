@@ -5,7 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
-import type * as z from "zod";
+import type { z } from "zod";
 import { signIn } from "@/actions/sign-in";
 import { FormNotice } from "@/components/form-notice";
 import { Button } from "@/components/ui/button";

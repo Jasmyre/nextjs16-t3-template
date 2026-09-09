@@ -1,6 +1,6 @@
 "use server";
 
-import type * as z from "zod";
+import type { z } from "zod";
 
 import { SignUpSchema } from "@/schemas/auth-schema";
 import { registerUser } from "@/services/auth-service";

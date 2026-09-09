@@ -43,6 +43,7 @@ model User {
 
     accounts Account[]
     posts    Post[]
+    personalAccessTokens PersonalAccessToken[]
 }
 
 model Role {
@@ -57,6 +58,20 @@ enum RoleName {
     ADMIN
     MODERATOR
     USER
+}
+
+model PersonalAccessToken {
+    id        String    @id @default(cuid())
+    userId    String
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    name      String
+    prefix    String    @unique
+    tokenHash String    @unique
+    expiresAt DateTime?
+    revokedAt DateTime?
+    createdAt DateTime  @default(now())
+
+    @@index([userId])
 }
 
 model Account {

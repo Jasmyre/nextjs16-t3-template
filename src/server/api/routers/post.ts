@@ -4,7 +4,12 @@ import { z } from "zod";
 import {
   createPostSchema,
   deletePostSchema,
+  helloOutputSchema,
+  latestPostOutputSchema,
   postIdSchema,
+  postListOutputSchema,
+  postOutputSchema,
+  postWithAuthorOutputSchema,
   updatePostSchema,
 } from "@/schemas/post-schema";
 import {
@@ -24,23 +29,101 @@ import {
   update,
 } from "@/services/post-service";
 
+type DateLike = Date | string;
+
+const toIsoDateTime = (value: DateLike): string =>
+  value instanceof Date ? value.toISOString() : value;
+
+const toPostOutput = <T extends { createdAt: DateLike; updatedAt: DateLike }>(
+  post: T
+): Omit<T, "createdAt" | "updatedAt"> & {
+  createdAt: string;
+  updatedAt: string;
+} => ({
+  ...post,
+  createdAt: toIsoDateTime(post.createdAt),
+  updatedAt: toIsoDateTime(post.updatedAt),
+});
+
 export const postRouter = createTRPCRouter({
   hello: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/api/v1/greeting",
+        tags: ["posts"],
+        summary: "Greet a caller by name",
+        protect: false,
+      },
+    })
     .input(z.object({ text: z.string() }))
+    .output(helloOutputSchema)
     .query(({ input }) => ({
       greeting: greet(input.text),
     })),
 
   create: permissionProcedure("Post", "create")
+    .meta({
+      openapi: {
+        method: "POST",
+        path: "/api/v1/posts",
+        tags: ["posts"],
+        summary: "Create a post",
+        protect: true,
+      },
+    })
     .input(createPostSchema)
-    .mutation(({ ctx, input }) => create(input.name, ctx.user.id)),
+    .output(postOutputSchema)
+    .mutation(async ({ ctx, input }) =>
+      toPostOutput(await create(input.name, ctx.user.id))
+    ),
 
-  list: permissionProcedure("Post", "view").query(async ({ ctx }) =>
-    list(ctx.user)
-  ),
+  list: permissionProcedure("Post", "view")
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/api/v1/posts",
+        tags: ["posts"],
+        summary: "List posts visible to the caller",
+        protect: true,
+      },
+    })
+    .output(postListOutputSchema)
+    .query(async ({ ctx }) =>
+      (await list(ctx.user)).map((post) => toPostOutput(post))
+    ),
+
+  // NOTE: `getLatest` is registered before `getById` on purpose. The REST
+  // adapter matches paths in registration order, and `/posts/latest` also
+  // matches the `/posts/{id}` template — the exact route must win.
+  getLatest: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/api/v1/posts/latest",
+        tags: ["posts"],
+        summary: "Fetch the latest post",
+        protect: false,
+      },
+    })
+    .output(latestPostOutputSchema)
+    .query(async () => {
+      const post = await getLatest();
+      return post ? toPostOutput(post) : null;
+    }),
 
   getById: permissionProcedure("Post", "view")
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/api/v1/posts/{id}",
+        tags: ["posts"],
+        summary: "Fetch a post by id",
+        protect: true,
+      },
+    })
     .input(z.object({ id: postIdSchema }))
+    .output(postWithAuthorOutputSchema)
     .query(async ({ input }) => {
       const post = await getByIdWithAuthor(input.id);
 
@@ -51,11 +134,21 @@ export const postRouter = createTRPCRouter({
         });
       }
 
-      return post;
+      return toPostOutput(post);
     }),
 
   update: permissionProcedure("Post", "update")
+    .meta({
+      openapi: {
+        method: "PATCH",
+        path: "/api/v1/posts/{id}",
+        tags: ["posts"],
+        summary: "Rename a post",
+        protect: true,
+      },
+    })
     .input(updatePostSchema)
+    .output(postOutputSchema)
     .mutation(async ({ ctx, input }) => {
       const post = await getById(input.id);
 
@@ -66,11 +159,21 @@ export const postRouter = createTRPCRouter({
         });
       }
 
-      return update(input.id, input.name);
+      return toPostOutput(await update(input.id, input.name));
     }),
 
   delete: permissionProcedure("Post", "delete")
+    .meta({
+      openapi: {
+        method: "DELETE",
+        path: "/api/v1/posts/{id}",
+        tags: ["posts"],
+        summary: "Delete a post",
+        protect: true,
+      },
+    })
     .input(deletePostSchema)
+    .output(postOutputSchema)
     .mutation(async ({ ctx, input }) => {
       const post = await getById(input.id);
 
@@ -81,8 +184,6 @@ export const postRouter = createTRPCRouter({
         });
       }
 
-      return remove(input.id);
+      return toPostOutput(await remove(input.id));
     }),
-
-  getLatest: publicProcedure.query(() => getLatest()),
 });

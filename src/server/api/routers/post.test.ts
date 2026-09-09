@@ -50,10 +50,41 @@ const makeUser = (id: string, roles: RoleName[]): Session["user"] => ({
   emailVerified: new Date(),
 });
 
-const ownPost = { id: 1, name: "My post", authorId: "user-1" };
-const otherPost = { id: 2, name: "Their post", authorId: "user-2" };
+// Service-layer rows carry real `Date` instances (Prisma shape); the router
+// serializes them to ISO strings so the output contract holds on tRPC itself.
+const stamp = new Date("2026-01-15T00:00:00.000Z");
+const isoStamp = stamp.toISOString();
+
+const ownPost = {
+  id: 1,
+  name: "My post",
+  authorId: "user-1",
+  createdAt: stamp,
+  updatedAt: stamp,
+};
+const otherPost = {
+  id: 2,
+  name: "Their post",
+  authorId: "user-2",
+  createdAt: stamp,
+  updatedAt: stamp,
+};
+const ownPostOutput = { ...ownPost, createdAt: isoStamp, updatedAt: isoStamp };
+const otherPostOutput = {
+  ...otherPost,
+  createdAt: isoStamp,
+  updatedAt: isoStamp,
+};
 const ownPostWithAuthor = { ...ownPost, author: { name: "My name" } };
 const otherPostWithAuthor = { ...otherPost, author: { name: "Their name" } };
+const ownPostWithAuthorOutput = {
+  ...ownPostOutput,
+  author: { name: "My name" },
+};
+const otherPostWithAuthorOutput = {
+  ...otherPostOutput,
+  author: { name: "Their name" },
+};
 
 describe("post router", () => {
   let caller: ReturnType<typeof createCaller>;
@@ -106,7 +137,7 @@ describe("post router", () => {
     it("delegates creation with the session user as author", async () => {
       createMock.mockResolvedValue(ownPost);
       const result = await authedCaller.post.create({ name: "My post" });
-      expect(result).toEqual(ownPost);
+      expect(result).toEqual(ownPostOutput);
       expect(createMock).toHaveBeenCalledWith("My post", "user-1");
     });
 
@@ -133,7 +164,7 @@ describe("post router", () => {
         id: 1,
         name: "Renamed",
       });
-      expect(result).toEqual({ ...ownPost, name: "Renamed" });
+      expect(result).toEqual({ ...ownPostOutput, name: "Renamed" });
       expect(updateMock).toHaveBeenCalledWith(1, "Renamed");
     });
 
@@ -160,14 +191,14 @@ describe("post router", () => {
         id: 2,
         name: "Moderated",
       });
-      expect(result).toEqual({ ...otherPost, name: "Moderated" });
+      expect(result).toEqual({ ...otherPostOutput, name: "Moderated" });
     });
 
     it("lets an admin update any post", async () => {
       getByIdMock.mockResolvedValue(otherPost);
       updateMock.mockResolvedValue({ ...otherPost, name: "Edited" });
       const result = await adminCaller.post.update({ id: 2, name: "Edited" });
-      expect(result).toEqual({ ...otherPost, name: "Edited" });
+      expect(result).toEqual({ ...otherPostOutput, name: "Edited" });
     });
 
     it("rejects an unauthenticated update", async () => {
@@ -183,7 +214,7 @@ describe("post router", () => {
       getByIdMock.mockResolvedValue(ownPost);
       removeMock.mockResolvedValue(ownPost);
       const result = await authedCaller.post.delete({ id: 1 });
-      expect(result).toEqual(ownPost);
+      expect(result).toEqual(ownPostOutput);
       expect(removeMock).toHaveBeenCalledWith(1);
     });
 
@@ -207,7 +238,7 @@ describe("post router", () => {
       getByIdMock.mockResolvedValue({ ...ownPost, authorId: "user-4" });
       removeMock.mockResolvedValue({ ...ownPost, authorId: "user-4" });
       const result = await moderatorCaller.post.delete({ id: 1 });
-      expect(result).toEqual({ ...ownPost, authorId: "user-4" });
+      expect(result).toEqual({ ...ownPostOutput, authorId: "user-4" });
       expect(removeMock).toHaveBeenCalledWith(1);
     });
 
@@ -223,7 +254,7 @@ describe("post router", () => {
       getByIdMock.mockResolvedValue(otherPost);
       removeMock.mockResolvedValue(otherPost);
       const result = await adminCaller.post.delete({ id: 2 });
-      expect(result).toEqual(otherPost);
+      expect(result).toEqual(otherPostOutput);
     });
 
     it("rejects an unauthenticated delete", async () => {
@@ -238,7 +269,7 @@ describe("post router", () => {
     it("returns the user's own posts", async () => {
       listMock.mockResolvedValue([ownPostWithAuthor]);
       const result = await authedCaller.post.list();
-      expect(result).toEqual([ownPostWithAuthor]);
+      expect(result).toEqual([ownPostWithAuthorOutput]);
       expect(listMock).toHaveBeenCalledWith(
         expect.objectContaining({ id: "user-1", roles: ["USER"] })
       );
@@ -247,7 +278,10 @@ describe("post router", () => {
     it("returns all posts for a moderator", async () => {
       listMock.mockResolvedValue([ownPostWithAuthor, otherPostWithAuthor]);
       const result = await moderatorCaller.post.list();
-      expect(result).toEqual([ownPostWithAuthor, otherPostWithAuthor]);
+      expect(result).toEqual([
+        ownPostWithAuthorOutput,
+        otherPostWithAuthorOutput,
+      ]);
       expect(listMock).toHaveBeenCalledWith(
         expect.objectContaining({ id: "user-4", roles: ["MODERATOR"] })
       );
@@ -256,7 +290,10 @@ describe("post router", () => {
     it("returns all posts for an admin", async () => {
       listMock.mockResolvedValue([ownPostWithAuthor, otherPostWithAuthor]);
       const result = await adminCaller.post.list();
-      expect(result).toEqual([ownPostWithAuthor, otherPostWithAuthor]);
+      expect(result).toEqual([
+        ownPostWithAuthorOutput,
+        otherPostWithAuthorOutput,
+      ]);
       expect(listMock).toHaveBeenCalledWith(
         expect.objectContaining({ id: "user-3", roles: ["ADMIN"] })
       );
@@ -274,21 +311,21 @@ describe("post router", () => {
     it("returns a single post with its author", async () => {
       getByIdWithAuthorMock.mockResolvedValue(ownPostWithAuthor);
       const result = await authedCaller.post.getById({ id: 1 });
-      expect(result).toEqual(ownPostWithAuthor);
+      expect(result).toEqual(ownPostWithAuthorOutput);
       expect(getByIdWithAuthorMock).toHaveBeenCalledWith(1);
     });
 
     it("returns a post for a moderator", async () => {
       getByIdWithAuthorMock.mockResolvedValue(otherPostWithAuthor);
       const result = await moderatorCaller.post.getById({ id: 2 });
-      expect(result).toEqual(otherPostWithAuthor);
+      expect(result).toEqual(otherPostWithAuthorOutput);
       expect(getByIdWithAuthorMock).toHaveBeenCalledWith(2);
     });
 
     it("returns a post for an admin", async () => {
       getByIdWithAuthorMock.mockResolvedValue(otherPostWithAuthor);
       const result = await adminCaller.post.getById({ id: 2 });
-      expect(result).toEqual(otherPostWithAuthor);
+      expect(result).toEqual(otherPostWithAuthorOutput);
       expect(getByIdWithAuthorMock).toHaveBeenCalledWith(2);
     });
 
@@ -310,6 +347,92 @@ describe("post router", () => {
   it("returns the latest post from the service", async () => {
     getLatestMock.mockResolvedValue(otherPost);
     const result = await caller.post.getLatest();
-    expect(result).toEqual(otherPost);
+    expect(result).toEqual(otherPostOutput);
+  });
+
+  describe("output contracts", () => {
+    it("rejects a create result missing its date fields", async () => {
+      createMock.mockResolvedValue({
+        id: 1,
+        name: "My post",
+        authorId: "user-1",
+      });
+      await expect(
+        authedCaller.post.create({ name: "My post" })
+      ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+
+    it("rejects a create result carrying an unknown field", async () => {
+      createMock.mockResolvedValue({ ...ownPost, extra: "drift" });
+      await expect(
+        authedCaller.post.create({ name: "My post" })
+      ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+
+    it("rejects a list row with a non-ISO date", async () => {
+      listMock.mockResolvedValue([
+        { ...ownPostWithAuthor, createdAt: "15/01/2026", updatedAt: isoStamp },
+      ]);
+      await expect(authedCaller.post.list()).rejects.toMatchObject({
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    });
+
+    it("rejects a getById result missing its author", async () => {
+      getByIdWithAuthorMock.mockResolvedValue(ownPost);
+      await expect(authedCaller.post.getById({ id: 1 })).rejects.toMatchObject({
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    });
+
+    it("returns null when there is no latest post", async () => {
+      getLatestMock.mockResolvedValue(null);
+      await expect(caller.post.getLatest()).resolves.toBeNull();
+    });
+  });
+
+  describe("public-vs-protected matrix", () => {
+    it("serves the public reads signed-out (hello, getLatest)", async () => {
+      greetMock.mockReturnValue("Hello World");
+      getLatestMock.mockResolvedValue(null);
+      await expect(caller.post.hello({ text: "World" })).resolves.toEqual({
+        greeting: "Hello World",
+      });
+      await expect(caller.post.getLatest()).resolves.toBeNull();
+    });
+
+    it("rejects every protected op signed-out with UNAUTHORIZED", async () => {
+      await expect(caller.post.create({ name: "Nope" })).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      await expect(caller.post.list()).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      await expect(caller.post.getById({ id: 1 })).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      await expect(
+        caller.post.update({ id: 1, name: "Nope" })
+      ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+      await expect(caller.post.delete({ id: 1 })).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      expect(createMock).not.toHaveBeenCalled();
+      expect(listMock).not.toHaveBeenCalled();
+      expect(getByIdWithAuthorMock).not.toHaveBeenCalled();
+      expect(updateMock).not.toHaveBeenCalled();
+      expect(removeMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects a role-less caller with FORBIDDEN on a protected op", async () => {
+      const roleLessCaller = createCaller({
+        headers: new Headers(),
+        user: makeUser("user-9", []),
+      });
+      await expect(roleLessCaller.post.list()).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+      expect(listMock).not.toHaveBeenCalled();
+    });
   });
 });
