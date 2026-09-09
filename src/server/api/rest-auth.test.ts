@@ -92,24 +92,25 @@ describe("resolveRestUser", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 
-  it("falls back to the cookie session when the Bearer token is invalid", async () => {
+  it("rejects an invalid Bearer token with 401 instead of cookie fallback", async () => {
     verifyTokenMock.mockResolvedValue(null);
     authMock.mockResolvedValue({ user: sessionUser });
 
     const user = await resolveRestUser(headersWith("Bearer bad-token"));
 
     expect(verifyTokenMock).toHaveBeenCalledWith("bad-token");
-    expect(authMock).toHaveBeenCalled();
-    expect(user).toMatchObject({ id: "user-2", roles: ["ADMIN"] });
+    expect(authMock).not.toHaveBeenCalled();
+    expect(user).toBeNull();
   });
 
-  it("returns null when neither Bearer nor cookie resolves", async () => {
-    verifyTokenMock.mockResolvedValue(null);
-    authMock.mockResolvedValue(null);
+  it("rejects a throwing verifier without consulting the cookie session", async () => {
+    verifyTokenMock.mockRejectedValue(new Error("db down"));
+    authMock.mockResolvedValue({ user: sessionUser });
 
     await expect(
       resolveRestUser(headersWith("Bearer bad-token"))
     ).resolves.toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
   });
 
   it("uses the cookie session when no Bearer token is present", async () => {

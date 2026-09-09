@@ -246,7 +246,7 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 
 - `src/server/api/openapi.ts` generates the versioned Document once at module load (build time for the static route, never per request): the 8 annotated post/dashboard Operations; the unannotated admin surface is auto-excluded. Security schemes are `bearer` (PAT) + `cookie` (session); every protected Operation requires either.
 - `src/app/api/v1/[...rest]/route.ts` serves the same routers as plain JSON (ISO datetimes, no superjson envelope) via `createOpenApiFetchHandler` (`endpoint: "/"`, `force-dynamic`). The tRPC mount at `/api/trpc` is untouched (batched, superjson, cookie-only).
-- Dual auth lives in `src/server/api/rest-auth.ts`: Bearer PAT first (`verifyToken` → session-shaped user so permission checks run unchanged), session-cookie fallback for the interactive Reference UI.
+- Dual auth lives in `src/server/api/rest-auth.ts`: Bearer PAT first (`verifyToken` → session-shaped user so permission checks run unchanged), session-cookie fallback only when no Bearer is presented. A presented-but-invalid Bearer fails closed to `null` (401 on protected Operations) and never inherits the cookie session.
 - `src/app/api/openapi.json/route.ts` serves the static Document; `src/app/reference/route.ts` renders the Scalar Reference UI against it. `/api/openapi.json` and `/api/v1/*` bypass the proxy landing redirect (they answer 401/403/404 JSON themselves); `/reference` is public in `src/routes.ts`.
 - `post.getLatest` is registered before `post.getById` on purpose: the adapter matches paths in registration order and `/posts/latest` also matches the `/posts/{id}` template — the exact route must win. Keep this order when touching `postRouter`.
 

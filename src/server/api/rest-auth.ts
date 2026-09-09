@@ -45,11 +45,14 @@ const toSessionUser = (tokenUser: UserWithRoles): Session["user"] =>
 
 /**
  * Dual auth for the REST mount: Bearer personal access token first,
- * session-cookie fallback. A valid Bearer token wins outright; an invalid
- * or absent one falls through to `auth()` so the interactive Reference UI
- * keeps working without token setup. Resolves to the standard
- * user-with-roles shape so coarse and row-level permission checks apply
- * unchanged on both transports.
+ * session-cookie fallback only when no Bearer is presented. A valid Bearer
+ * token wins outright without consulting the cookie session; a presented
+ * but invalid/expired/revoked Bearer resolves to `null` (401 on protected
+ * Operations) so a leaked token can never silently inherit a browser
+ * session. Cookie fallback keeps the interactive Reference UI working
+ * without token setup. Resolves to the standard user-with-roles shape so
+ * coarse and row-level permission checks apply unchanged on both
+ * transports.
  */
 export const resolveRestUser = async (
   headers: Headers
@@ -64,8 +67,10 @@ export const resolveRestUser = async (
         return toSessionUser(tokenUser);
       }
     } catch {
-      // Fall through to the cookie session below.
+      // Verification failure fails closed — never fall back to cookies.
     }
+
+    return null;
   }
 
   const session = await auth();
