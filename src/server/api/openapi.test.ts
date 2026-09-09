@@ -21,7 +21,7 @@ const pathsOf = (): PathsObject =>
  * Never snapshots the whole Document — only externally observable shape.
  */
 describe("openApiDocument", () => {
-  const expectedOperations: Array<[string, string]> = [
+  const expectedOperations: [string, string][] = [
     ["/api/v1/greeting", "get"],
     ["/api/v1/posts", "post"],
     ["/api/v1/posts", "get"],
@@ -34,7 +34,7 @@ describe("openApiDocument", () => {
 
   it("exposes exactly the 8 annotated Operations", () => {
     const paths = pathsOf();
-    const actual: Array<[string, string]> = [];
+    const actual: [string, string][] = [];
 
     for (const [path, methods] of Object.entries(paths)) {
       for (const method of Object.keys(methods)) {
@@ -71,12 +71,10 @@ describe("openApiDocument", () => {
         expect(operation?.security ?? []).toEqual([]);
       } else {
         const security = operation?.security as
-          | Array<Record<string, unknown>>
+          | Record<string, unknown>[]
           | undefined;
         expect(security).toBeDefined();
-        const names = (security ?? []).flatMap((entry) =>
-          Object.keys(entry)
-        );
+        const names = (security ?? []).flatMap((entry) => Object.keys(entry));
         expect(names).toContain("bearer");
         expect(names).toContain("cookie");
       }

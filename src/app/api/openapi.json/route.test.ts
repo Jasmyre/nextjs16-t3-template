@@ -29,9 +29,9 @@ describe("openapi.json route", () => {
       0
     );
     expect(operationCount).toBe(8);
-    expect(Object.keys(document.components?.securitySchemes ?? {}).sort()).toEqual(
-      ["bearer", "cookie"]
-    );
+    expect(
+      Object.keys(document.components?.securitySchemes ?? {}).sort()
+    ).toEqual(["bearer", "cookie"]);
 
     const serialized = JSON.stringify(document.paths);
     expect(serialized).not.toContain("admin");

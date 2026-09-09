@@ -51,9 +51,9 @@ const sessionUser = {
 
 describe("extractBearerToken", () => {
   it("returns the token for a Bearer authorization header", () => {
-    expect(
-      extractBearerToken(headersWith("Bearer pat_abcdef12_secret"))
-    ).toBe("pat_abcdef12_secret");
+    expect(extractBearerToken(headersWith("Bearer pat_abcdef12_secret"))).toBe(
+      "pat_abcdef12_secret"
+    );
   });
 
   it("matches the scheme case-insensitively", () => {

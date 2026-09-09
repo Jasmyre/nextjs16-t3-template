@@ -1,8 +1,6 @@
 import { createOpenApiFetchHandler } from "trpc-to-openapi";
-import { appRouter } from "@/server/api/root";
 import { createRestContext } from "@/server/api/rest-auth";
-
-export const dynamic = "force-dynamic";
+import { appRouter } from "@/server/api/root";
 
 /**
  * Versioned REST mount (v1) alongside the unchanged tRPC transport.
@@ -11,7 +9,8 @@ export const dynamic = "force-dynamic";
  * at `/api/v1/*`. Auth is dual (Bearer first, session-cookie fallback) via
  * `createRestContext`; permission checks run unchanged inside the routers.
  * The tRPC-only admin surface has no OpenAPI annotations, so it 404s here
- * by construction.
+ * by construction. (Request headers are read per request, so this stays
+ * dynamic under `cacheComponents` without a segment config.)
  */
 const handler = (req: Request) =>
   createOpenApiFetchHandler({
