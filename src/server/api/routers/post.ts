@@ -93,6 +93,25 @@ export const postRouter = createTRPCRouter({
       (await list(ctx.user)).map((post) => toPostOutput(post))
     ),
 
+  // NOTE: `getLatest` is registered before `getById` on purpose. The REST
+  // adapter matches paths in registration order, and `/posts/latest` also
+  // matches the `/posts/{id}` template — the exact route must win.
+  getLatest: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/api/v1/posts/latest",
+        tags: ["posts"],
+        summary: "Fetch the latest post",
+        protect: false,
+      },
+    })
+    .output(latestPostOutputSchema)
+    .query(async () => {
+      const post = await getLatest();
+      return post ? toPostOutput(post) : null;
+    }),
+
   getById: permissionProcedure("Post", "view")
     .meta({
       openapi: {
@@ -166,21 +185,5 @@ export const postRouter = createTRPCRouter({
       }
 
       return toPostOutput(await remove(input.id));
-    }),
-
-  getLatest: publicProcedure
-    .meta({
-      openapi: {
-        method: "GET",
-        path: "/api/v1/posts/latest",
-        tags: ["posts"],
-        summary: "Fetch the latest post",
-        protect: false,
-      },
-    })
-    .output(latestPostOutputSchema)
-    .query(async () => {
-      const post = await getLatest();
-      return post ? toPostOutput(post) : null;
     }),
 });

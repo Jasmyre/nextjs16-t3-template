@@ -242,6 +242,14 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 - `createCaller` exported for server-side direct calls (used by RSC path).
 - **Strict output contracts on externally exposed Procedures**: every Procedure that will be REST-mounted declares a `z.strictObject` `.output()` from `src/schemas/**` (unknown fields fail loudly, never strip-drift) plus `.meta({ openapi: { method, path, tags, summary, protect } })` for the `trpc-to-openapi` generator (tRPC instance is typed `initTRPC.meta<OpenApiMeta>()`). Date-bearing outputs pin `z.iso.datetime()` — the REST wire shape — and resolvers serialize `Date` → ISO at the controller tier so the contract already holds on tRPC itself. Paths carry the `/api/v1` version prefix; one Tag per Router (`posts`, `dashboard`); `protect: false` only on public reads. Surfaces that stay tRPC-only (e.g. `admin`) are left unannotated and are auto-excluded from the Document.
 
+### REST mount — OpenAPI v1 (`#30`)
+
+- `src/server/api/openapi.ts` generates the versioned Document once at module load (build time for the static route, never per request): the 8 annotated post/dashboard Operations; the unannotated admin surface is auto-excluded. Security schemes are `bearer` (PAT) + `cookie` (session); every protected Operation requires either.
+- `src/app/api/v1/[...rest]/route.ts` serves the same routers as plain JSON (ISO datetimes, no superjson envelope) via `createOpenApiFetchHandler` (`endpoint: "/"`, `force-dynamic`). The tRPC mount at `/api/trpc` is untouched (batched, superjson, cookie-only).
+- Dual auth lives in `src/server/api/rest-auth.ts`: Bearer PAT first (`verifyToken` → session-shaped user so permission checks run unchanged), session-cookie fallback for the interactive Reference UI.
+- `src/app/api/openapi.json/route.ts` serves the static Document; `src/app/reference/route.ts` renders the Scalar Reference UI against it. `/api/openapi.json` and `/api/v1/*` bypass the proxy landing redirect (they answer 401/403/404 JSON themselves); `/reference` is public in `src/routes.ts`.
+- `post.getLatest` is registered before `post.getById` on purpose: the adapter matches paths in registration order and `/posts/latest` also matches the `/posts/{id}` template — the exact route must win. Keep this order when touching `postRouter`.
+
 ### Client-side (`src/trpc/react.tsx`)
 
 - `createTRPCReact<AppRouter>()` produces typed React hooks.

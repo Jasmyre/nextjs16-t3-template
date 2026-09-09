@@ -36,6 +36,15 @@ export default auth((req) => {
     return;
   }
 
+  // Versioned REST mount and its static Document answer with their own
+  // HTTP status codes (401/403/404 JSON) — never a landing-page redirect.
+  if (
+    nextUrl.pathname === "/api/openapi.json" ||
+    nextUrl.pathname.startsWith("/api/v1")
+  ) {
+    return;
+  }
+
   // Allow access to public routes without authentication
   if (nextUrl.pathname.startsWith("/api/public")) {
     return;
