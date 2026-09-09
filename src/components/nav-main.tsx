@@ -32,6 +32,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { useCloseOnBack } from "@/hooks/use-close-on-back";
 
 export interface NavMainSubItem {
   icon?: ReactNode;
@@ -82,6 +83,8 @@ export function NavMain({
   const pathname = usePathname();
   const router = useRouter();
   const commandItems = getCommandItems(items);
+
+  useCloseOnBack(isCommandOpen, () => setIsCommandOpen(false));
 
   const isCurrentPath = (url: string) =>
     url === "/"

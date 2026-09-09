@@ -33,3 +33,17 @@ _Avoid_: Document, Reference UI (the mount is the callable surface, not its desc
 **Bearer token vs session**:
 A Bearer token is a named, expiring, revocable credential for external callers — presented per request and granting exactly the holder's own access, never more. A session is the browser's cookie-based sign-in. Both resolve to the same user-with-roles, so permission checks behave identically on either.
 _Avoid_: Sharing a session cookie with scripts; treating a token as elevated access
+
+## Overlay language
+
+**Dialog**:
+A centered modal requiring a decision or input.
+_Avoid_: Popup, drawer
+
+**Sheet**:
+An edge-anchored panel for navigation or details.
+_Avoid_: Drawer, popup, modal
+
+**Back-close overlay**:
+A Dialog or Sheet that pushes a history entry while open so the browser Back button closes it instead of navigating away.
+_Avoid_: Treating DropdownMenu, Popover, or Tooltip as back-close overlays — those are anchored transients that dismiss on outside interaction

@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCloseOnBack } from "@/hooks/use-close-on-back";
 
 export function DeletePostDialog({
   title,
@@ -21,6 +22,7 @@ export function DeletePostDialog({
   onOpenChange: (open: boolean) => void;
   onConfirm: () => Promise<void>;
 }) {
+  useCloseOnBack(open, () => onOpenChange(false));
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>

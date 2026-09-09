@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCloseOnBack } from "@/hooks/use-close-on-back";
 import { cn } from "@/lib/utils";
 import type { AdminUser } from "@/types/admin";
 
@@ -32,6 +33,8 @@ export function ManageRolesDialog({
     user.roles.map((role) => role.name)
   );
   const [saving, setSaving] = useState(false);
+
+  useCloseOnBack(open, () => onOpenChange(false));
 
   const toggle = (role: RoleName) => {
     setSelected((prev) =>
