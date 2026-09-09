@@ -78,7 +78,8 @@
     "test:integration": "vitest run --project integration",
     "test:coverage": "vitest run --project unit --coverage",
     "test:all": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "validate": "npm run typecheck && npm run check:write && npm run test:all && npm run build"
   },
   "type": "module",
   "version": "0.1.0",
