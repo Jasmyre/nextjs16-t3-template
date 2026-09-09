@@ -140,7 +140,7 @@ function SidebarProvider({
             } as React.CSSProperties
           }
           className={cn(
-            "group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar",
+            "group/sidebar-wrapper flex min-h-svh w-full min-w-0 overflow-x-clip has-data-[variant=inset]:bg-sidebar",
             className
           )}
           {...props}
@@ -185,7 +185,27 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+      <Sheet
+        open={openMobile}
+        onOpenChange={setOpenMobile}
+        // Non-modal: a nav drawer must not lock body scroll. The modal
+        // default drives react-remove-scroll (body overflow hidden +
+        // padding compensation), which shifts the full-bleed page behind
+        // the drawer on open.
+        modal={false}
+        {...props}
+      >
+        {/* Non-modal Sheets render no overlay (Radix mounts DialogOverlay
+        for modal dialogs only), so the drawer brings its own dimming layer.
+        It sits below the panel (z-40 vs z-50) and tap closes the drawer. */}
+        {openMobile ? (
+          <div
+            aria-hidden="true"
+            data-slot="sidebar-backdrop"
+            onClick={() => setOpenMobile(false)}
+            className="fixed inset-0 z-40 animate-in bg-black/10 fade-in-0 duration-100 supports-backdrop-filter:backdrop-blur-xs"
+          />
+        ) : null}
         <SheetContent
           dir={dir}
           data-sidebar="sidebar"
@@ -311,7 +331,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+        "relative flex w-full min-w-0 flex-1 flex-col overflow-x-clip bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className
       )}
       {...props}
