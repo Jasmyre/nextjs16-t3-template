@@ -1,7 +1,14 @@
 import type { RoleName } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
+import { revalidateTag } from "next/cache";
 import type { Session } from "next-auth";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  DASHBOARD_STATS_TAG,
+  POSTS_ITEM_TAG,
+  POSTS_LIST_TAG,
+} from "@/lib/cache-tags";
+import { STALE_WHILE_REVALIDATE_PROFILE } from "@/lib/db-cache";
 import { createCaller } from "@/server/api/root";
 
 const {
@@ -118,6 +125,7 @@ describe("post router", () => {
     removeMock.mockReset();
     listMock.mockReset();
     getByIdWithAuthorMock.mockReset();
+    vi.mocked(revalidateTag).mockClear();
   });
 
   it("returns a greeting for the hello query", async () => {
@@ -433,6 +441,53 @@ describe("post router", () => {
         code: "FORBIDDEN",
       });
       expect(listMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cache invalidation", () => {
+    const swr = STALE_WHILE_REVALIDATE_PROFILE;
+
+    it("revalidates the post list and dashboard stats on create", async () => {
+      createMock.mockResolvedValue(ownPost);
+      await authedCaller.post.create({ name: "My post" });
+
+      expect(revalidateTag).toHaveBeenCalledWith(POSTS_LIST_TAG, swr);
+      expect(revalidateTag).toHaveBeenCalledWith(DASHBOARD_STATS_TAG, swr);
+    });
+
+    it("revalidates the list, item, and stats on update", async () => {
+      getByIdMock.mockResolvedValue(ownPost);
+      updateMock.mockResolvedValue({ ...ownPost, name: "Renamed" });
+      await authedCaller.post.update({ id: 1, name: "Renamed" });
+
+      expect(revalidateTag).toHaveBeenCalledWith(POSTS_LIST_TAG, swr);
+      expect(revalidateTag).toHaveBeenCalledWith(POSTS_ITEM_TAG, swr);
+      expect(revalidateTag).toHaveBeenCalledWith(DASHBOARD_STATS_TAG, swr);
+    });
+
+    it("revalidates the list, item, and stats on delete", async () => {
+      getByIdMock.mockResolvedValue(ownPost);
+      removeMock.mockResolvedValue(ownPost);
+      await authedCaller.post.delete({ id: 1 });
+
+      expect(revalidateTag).toHaveBeenCalledWith(POSTS_LIST_TAG, swr);
+      expect(revalidateTag).toHaveBeenCalledWith(POSTS_ITEM_TAG, swr);
+      expect(revalidateTag).toHaveBeenCalledWith(DASHBOARD_STATS_TAG, swr);
+    });
+
+    it("skips invalidation when creation fails validation", async () => {
+      await expect(
+        authedCaller.post.create({ name: "" })
+      ).rejects.toBeInstanceOf(TRPCError);
+      expect(revalidateTag).not.toHaveBeenCalled();
+    });
+
+    it("skips invalidation on a forbidden update", async () => {
+      getByIdMock.mockResolvedValue(otherPost);
+      await expect(
+        authedCaller.post.update({ id: 2, name: "Hijacked" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 });

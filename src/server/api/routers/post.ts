@@ -1,6 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-
+import {
+  DASHBOARD_STATS_TAG,
+  POSTS_ITEM_TAG,
+  POSTS_LIST_TAG,
+} from "@/lib/cache-tags";
+import { revalidateCacheTag } from "@/lib/db-cache";
 import {
   createPostSchema,
   deletePostSchema,
@@ -74,9 +79,12 @@ export const postRouter = createTRPCRouter({
     })
     .input(createPostSchema)
     .output(postOutputSchema)
-    .mutation(async ({ ctx, input }) =>
-      toPostOutput(await create(input.name, ctx.user.id))
-    ),
+    .mutation(async ({ ctx, input }) => {
+      const post = toPostOutput(await create(input.name, ctx.user.id));
+      revalidateCacheTag(POSTS_LIST_TAG);
+      revalidateCacheTag(DASHBOARD_STATS_TAG);
+      return post;
+    }),
 
   list: permissionProcedure("Post", "view")
     .meta({
@@ -159,7 +167,11 @@ export const postRouter = createTRPCRouter({
         });
       }
 
-      return toPostOutput(await update(input.id, input.name));
+      const updated = toPostOutput(await update(input.id, input.name));
+      revalidateCacheTag(POSTS_LIST_TAG);
+      revalidateCacheTag(POSTS_ITEM_TAG);
+      revalidateCacheTag(DASHBOARD_STATS_TAG);
+      return updated;
     }),
 
   delete: permissionProcedure("Post", "delete")
@@ -184,6 +196,10 @@ export const postRouter = createTRPCRouter({
         });
       }
 
-      return toPostOutput(await remove(input.id));
+      const deleted = toPostOutput(await remove(input.id));
+      revalidateCacheTag(POSTS_LIST_TAG);
+      revalidateCacheTag(POSTS_ITEM_TAG);
+      revalidateCacheTag(DASHBOARD_STATS_TAG);
+      return deleted;
     }),
 });

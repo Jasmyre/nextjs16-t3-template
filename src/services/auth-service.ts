@@ -8,6 +8,8 @@ import {
   DEFAULT_ROLE,
   getUserByEmail,
 } from "@/data/user-repository";
+import { ADMIN_USERS_TAG, DASHBOARD_STATS_TAG } from "@/lib/cache-tags";
+import { revalidateCacheTag } from "@/lib/db-cache";
 
 export type RegisterResult =
   | { ok: true; userId: string }
@@ -33,6 +35,9 @@ export const registerUser = async (data: {
       password: hashedPassword,
       roles: { connect: { name: DEFAULT_ROLE } },
     });
+
+    revalidateCacheTag(ADMIN_USERS_TAG);
+    revalidateCacheTag(DASHBOARD_STATS_TAG);
 
     return { ok: true, userId: user.id };
   } catch (error) {

@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { Role, RoleName, User } from "@prisma/client";
+import { ADMIN_USERS_TAG, USERS_BY_ID_TAG } from "@/lib/cache-tags";
+import { cached } from "@/lib/db-cache";
 import { db } from "@/server/db";
 
 export type UserWithRoles = User & { roles: Role[] };
@@ -27,17 +29,25 @@ export const getUserByEmail = async (
     include: withRoles,
   });
 
-export const getUserById = async (id: string): Promise<UserWithRoles | null> =>
-  db.user.findUnique({
-    where: { id },
-    include: withRoles,
-  });
+export const getUserById = cached(
+  async (id: string): Promise<UserWithRoles | null> =>
+    db.user.findUnique({
+      where: { id },
+      include: withRoles,
+    }),
+  ["user-by-id"],
+  [USERS_BY_ID_TAG]
+);
 
-export const getAllUsers = async () =>
-  db.user.findMany({
-    select: adminUserSelect,
-    orderBy: { createdAt: "asc" },
-  });
+export const getAllUsers = cached(
+  async () =>
+    db.user.findMany({
+      select: adminUserSelect,
+      orderBy: { createdAt: "asc" },
+    }),
+  ["users-all"],
+  [ADMIN_USERS_TAG]
+);
 
 export const updateUserRoles = async (userId: string, roleNames: RoleName[]) =>
   db.user.update({

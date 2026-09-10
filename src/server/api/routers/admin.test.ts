@@ -1,6 +1,9 @@
 import type { RoleName } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import type { Session } from "next-auth";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { ADMIN_USERS_TAG, USERS_BY_ID_TAG } from "@/lib/cache-tags";
+import { STALE_WHILE_REVALIDATE_PROFILE } from "@/lib/db-cache";
 import { createCaller } from "@/server/api/root";
 
 const { listUsersMock, updateRolesMock } = vi.hoisted(() => ({
@@ -62,6 +65,7 @@ describe("admin router", () => {
   beforeEach(() => {
     listUsersMock.mockReset();
     updateRolesMock.mockReset();
+    vi.mocked(revalidateTag).mockClear();
   });
 
   describe("listUsers", () => {
@@ -153,6 +157,34 @@ describe("admin router", () => {
         adminCaller.admin.updateRoles({ userId: "user-1", roleNames: [] })
       ).rejects.toBeInstanceOf(Error);
       expect(updateRolesMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cache invalidation", () => {
+    it("revalidates the admin user list and session lookups on updateRoles", async () => {
+      const updated = { ...mockedUser, roles: [{ id: 2, name: "MODERATOR" }] };
+      updateRolesMock.mockResolvedValue(updated);
+
+      await adminCaller.admin.updateRoles({
+        userId: "user-1",
+        roleNames: ["MODERATOR"],
+      });
+
+      expect(revalidateTag).toHaveBeenCalledWith(
+        ADMIN_USERS_TAG,
+        STALE_WHILE_REVALIDATE_PROFILE
+      );
+      expect(revalidateTag).toHaveBeenCalledWith(
+        USERS_BY_ID_TAG,
+        STALE_WHILE_REVALIDATE_PROFILE
+      );
+    });
+
+    it("skips invalidation when a non-admin is rejected", async () => {
+      await expect(
+        userCaller.admin.updateRoles({ userId: "user-1", roleNames: ["ADMIN"] })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 });

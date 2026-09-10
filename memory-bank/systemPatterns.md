@@ -181,7 +181,14 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 - Use `cacheLife(profile)` to set time-based expiry: `"hours"`, `"days"`, `"max"`, or a custom `CacheLife` config.
 - Use `cacheTag("tag-name")` to tag cache entries for on-demand revalidation via `revalidateTag()` from `next/cache`.
 - Combine with `revalidateTag()` in Route Handlers or Server Actions to invalidate specific cache entries when data changes.
-- Not yet used in this codebase. Use for pages with expensive data fetches that can be cached and revalidated on demand.
+- Not used directly in this codebase (the server-side tRPC caller reads `headers()`, which is forbidden inside a `"use cache"` scope). Cross-request caching lives one tier down instead — see `unstable_cache` below.
+
+### `unstable_cache` for page-visit reads (in use)
+
+- Repository reads in `src/data/*` are wrapped with the shared `cached()` helper (`src/lib/db-cache.ts`) around `unstable_cache(fn, keyParts, { tags, revalidate: 60 })`, so repeat page visits share one cached result instead of issuing a fresh Prisma query per visit. Cache keys are `keyParts` plus the call arguments — user-scoped reads stay isolated per caller via their per-user argument (never share one wrapper across users without one).
+- Tag vocabulary lives in `src/lib/cache-tags.ts` and is intentionally coarse and static (`posts:list`, `posts:item`, `dashboard:stats`, `admin:users`, `users:by-id`): `unstable_cache` tags cannot vary per call argument, so any post write clears every post-list-shaped read and any role write clears the admin list plus the session user lookups. Writes are rare; page visits are not.
+- Wrapped reads: `listAllPosts`, `listPostsByAuthor`, `getPostByIdWithAuthor`, `getLatestPost`, `getDashboardStats`, `getUserById` (the `jwt()` hot path — role changes propagate within ~60s, mitigated by tag invalidation below), `getAllUsers`. Deliberately uncached: `getUserByEmail` (credential checks must stay fresh), raw `getPostById` (row-level permission checks), all writes.
+- Cache-hit deserialization revives `Date` fields as strings — every consumer already tolerates `Date | string` (router `DateLike`, `formatDate`, opaque session threading).
 
 ### `cacheComponents` (Automatic component-level caching)
 
@@ -210,13 +217,12 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 ### TanStack Query dehydration
 
 - Server-fetched queries are serialized with SuperJSON via `shouldDehydrateQuery` (including pending queries for Suspense compatibility).
-- The client hydrates from this serialized cache; `staleTime: 30s` prevents immediate refetch after hydration.
+- The client hydrates from this serialized cache; `staleTime: 60s` (matching the server `unstable_cache` window) prevents immediate refetch after hydration.
 
-### On-demand revalidation (not yet used)
+### On-demand revalidation (in use)
 
-- `revalidatePath("/path")` — invalidates all cached entries for a specific path.
-- `revalidateTag("tag")` — invalidates all cache entries tagged with a specific tag.
-- Use in Server Actions or Route Handlers after mutations to refresh stale data.
+- `revalidateCacheTag(tag)` (`src/lib/db-cache.ts`) wraps `revalidateTag(tag, "max")` — the required Next 16.3 second argument pins stale-while-revalidate semantics (serve cached while refreshing in the background). Immediate `updateTag` is Server-Actions-only, so tRPC mutations (Route Handlers) use this. Prefer the wrapper over raw `revalidateTag` so the SWR profile stays pinned in one place.
+- Call sites: post `create` → `posts:list` + `dashboard:stats`; post `update`/`delete` → plus `posts:item`; admin `updateRoles` → `admin:users` + `users:by-id`; credentials sign-up (`registerUser`) and OAuth sign-up (`authEvents.createUser`) → `admin:users` + `dashboard:stats`. Invalidation runs only after the write succeeds — failed validation/permission rejections skip it (covered by unit tests).
 - Prefer `cacheTag` + `revalidateTag` over `revalidatePath` for granular invalidation.
 
 ## tRPC Patterns (v11)
@@ -273,7 +279,7 @@ Three-layer test suite: Vitest (jsdom) unit, Vitest (node) DB integration, and P
 ### Tooling & scripts
 
 - Vitest 4 uses `test.projects` (the `vitest.workspace.*` files were removed in v4). Filter with `--project unit` / `--project integration`.
-- `server-only` is aliased to `tests/server-only-stub.ts` in both Vitest configs; `tests/unit/setup.ts` sets `SKIP_ENV_VALIDATION=true` and mocks `next/navigation` + `next-themes`.
+- `server-only` is aliased to `tests/server-only-stub.ts` in both Vitest configs; `next/cache` is aliased to `tests/next-cache-stub.ts` (passthrough `unstable_cache`, spying `revalidateTag`) so cached reads execute their real query logic in tests and invalidation is assertable at the caller seam. `tests/unit/setup.ts` sets `SKIP_ENV_VALIDATION=true` and mocks `next/navigation` + `next-themes`.
 - Scripts: `test` (unit), `test:integration`, `test:coverage` (unit + reporting, no thresholds), `test:all`, `test:e2e`, `typecheck:test` (`tsc -p tsconfig.test.json`).
 - Coverage is scoped via `coverage.include` to the seams under test, excluding shadcn `ui/`.
 
