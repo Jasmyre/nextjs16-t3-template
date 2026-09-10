@@ -19,7 +19,12 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import {
   SidebarGroup,
@@ -116,6 +121,9 @@ export function NavMain({
       <Dialog onOpenChange={setIsCommandOpen} open={isCommandOpen}>
         <DialogContent className="overflow-hidden p-0">
           <DialogTitle className="sr-only">Search Commands</DialogTitle>
+          <DialogDescription className="sr-only">
+            Search navigation commands and run them.
+          </DialogDescription>
           <Command>
             <CommandInput placeholder="Type a command or search..." />
             <CommandList>
