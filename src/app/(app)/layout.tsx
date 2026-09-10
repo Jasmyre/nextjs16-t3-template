@@ -1,11 +1,12 @@
+import { HouseIcon, NewspaperIcon } from "lucide-react";
 import { type ReactNode, Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
 import { AppShellAsync } from "@/components/app-shell-async";
 import type { NavMainItem } from "@/components/nav-main";
 
 const baseNavItems: NavMainItem[] = [
-  { title: "Home", url: "/" },
-  { title: "Posts", url: "/posts" },
+  { icon: <HouseIcon />, title: "Home", url: "/" },
+  { icon: <NewspaperIcon />, title: "Posts", url: "/posts" },
 ];
 
 export default function AppLayout({

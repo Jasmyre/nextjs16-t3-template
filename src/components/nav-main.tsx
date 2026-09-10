@@ -222,6 +222,7 @@ export function NavMain({
                             isActive={isCurrentPath(subItem.url)}
                           >
                             <Link href={subItem.url}>
+                              {subItem.icon}
                               <span>{subItem.title}</span>
                             </Link>
                           </SidebarMenuSubButton>

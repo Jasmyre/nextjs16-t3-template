@@ -1,3 +1,4 @@
+import { ShieldCheckIcon } from "lucide-react";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { auth } from "@/auth";
@@ -20,7 +21,13 @@ export async function AppShellAsync({
   const resolvedNavItems: NavMainItem[] = [
     ...navItems,
     ...(isAdmin && !navItems.some((item) => item.url === "/admin")
-      ? [{ title: "Admin", url: "/admin" }]
+      ? [
+          {
+            icon: <ShieldCheckIcon />,
+            title: "Admin",
+            url: "/admin",
+          } satisfies NavMainItem,
+        ]
       : []),
   ];
 

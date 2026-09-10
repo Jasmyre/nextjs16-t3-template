@@ -1,3 +1,4 @@
+import { LayoutDashboardIcon, UsersIcon } from "lucide-react";
 import { type ReactNode, Suspense } from "react";
 import { AdminGate } from "@/components/admin-gate";
 import { AdminShell } from "@/components/admin-shell";
@@ -5,8 +6,12 @@ import { AdminShellAsync } from "@/components/admin-shell-async";
 import type { NavMainItem } from "@/components/nav-main";
 
 const adminNavItems: NavMainItem[] = [
-  { title: "Back to Dashboard", url: "/" },
-  { title: "Users", url: "/admin" },
+  {
+    icon: <LayoutDashboardIcon />,
+    title: "Back to Dashboard",
+    url: "/",
+  },
+  { icon: <UsersIcon />, title: "Users", url: "/admin" },
 ];
 
 export default function AdminLayout({
