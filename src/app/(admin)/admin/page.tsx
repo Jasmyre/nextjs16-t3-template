@@ -5,7 +5,10 @@ export default async function AdminPage() {
   await api.admin.listUsers.prefetch();
 
   return (
-    <main className="w-full min-w-0 flex-1 p-4 lg:px-8">
+    <main
+      className="w-full min-w-0 flex-1 p-4 lg:px-8"
+      data-testid="admin-shell"
+    >
       <HydrateClient>
         <div className="flex flex-col gap-6">
           <div>

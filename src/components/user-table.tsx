@@ -45,7 +45,7 @@ export function UserTable() {
   };
 
   return (
-    <Card>
+    <Card data-testid="admin-content">
       <CardHeader>
         <CardTitle>Users</CardTitle>
         <CardDescription>Manage user accounts and roles.</CardDescription>

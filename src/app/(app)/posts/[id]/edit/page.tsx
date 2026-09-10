@@ -20,7 +20,10 @@ export default async function EditPostPage({
   const postId = Number(id);
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
+    <main
+      className="mx-auto w-full max-w-7xl px-4 py-10"
+      data-testid="edit-post-shell"
+    >
       <div className="mb-4">
         <Button
           asChild

@@ -8,7 +8,10 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
+    <main
+      className="mx-auto w-full max-w-7xl px-4 py-10"
+      data-testid="dashboard-shell"
+    >
       <HydrateClient>
         <Dashboard />
       </HydrateClient>

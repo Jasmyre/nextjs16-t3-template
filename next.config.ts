@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: true,
     authInterrupts: true,
+    exposeTestingApiInProductionBuild: process.env.EXPOSE_TESTING_API === "1",
   },
   logging: {
     fetches: {

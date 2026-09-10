@@ -3,7 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminLoading() {
   return (
-    <main className="container mx-auto max-w-7xl px-4 py-8">
+    <main
+      className="container mx-auto max-w-7xl px-4 py-8"
+      data-testid="admin-shell"
+    >
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1.5">
           <Skeleton className="h-7 w-48" />

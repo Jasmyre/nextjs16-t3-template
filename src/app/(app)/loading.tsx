@@ -3,7 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLoading() {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
+    <main
+      className="mx-auto w-full max-w-7xl px-4 py-10"
+      data-testid="dashboard-shell"
+    >
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1.5">

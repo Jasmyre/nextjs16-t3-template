@@ -48,7 +48,10 @@ export function Dashboard() {
   const [recentPosts] = api.post.list.useSuspenseQuery();
 
   return (
-    <div className="fade-in-0 flex animate-in flex-col gap-6 duration-200 ease-out motion-reduce:animate-none">
+    <div
+      className="fade-in-0 flex animate-in flex-col gap-6 duration-200 ease-out motion-reduce:animate-none"
+      data-testid="dashboard-content"
+    >
       <PageHeader
         description="An overview of your account and posts."
         title="Dashboard"

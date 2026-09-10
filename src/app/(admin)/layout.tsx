@@ -19,7 +19,9 @@ export default function AdminLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <div className="min-h-svh bg-background">
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={<AdminShell navItems={adminNavItems}>{children}</AdminShell>}
+      >
         <AdminGate>
           <Suspense
             fallback={

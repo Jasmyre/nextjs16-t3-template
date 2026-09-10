@@ -3,7 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewPostLoading() {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
+    <main
+      className="mx-auto w-full max-w-7xl px-4 py-10"
+      data-testid="new-post-shell"
+    >
       <Card>
         <CardHeader>
           <Skeleton className="h-5 w-28" />

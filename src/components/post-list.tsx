@@ -37,7 +37,10 @@ export function PostList() {
   };
 
   return (
-    <div className="fade-in-0 flex animate-in flex-col gap-6 duration-200 ease-out motion-reduce:animate-none">
+    <div
+      className="fade-in-0 flex animate-in flex-col gap-6 duration-200 ease-out motion-reduce:animate-none"
+      data-testid="posts-content"
+    >
       <PageHeader description="All posts you are allowed to see." title="Posts">
         <Button asChild>
           <Link href={NEW_POST_PATH}>
