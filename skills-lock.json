@@ -7,6 +7,12 @@
       "skillPath": "skills/emil-design-eng/SKILL.md",
       "computedHash": "87067d79205fdedc6d682891027dd9c7335486c4b4dc2e785638941a9d2e6061"
     },
+    "next-cache-components-optimizer": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "skillPath": "skills/next-cache-components-optimizer/SKILL.md",
+      "computedHash": "4b3ec1ad99551a98d2fefdaefdb398f88e1621e06fb250f7c06858d5371cb5aa"
+    },
     "shadcn": {
       "source": "shadcn-ui/ui",
       "sourceType": "github",
