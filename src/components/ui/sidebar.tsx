@@ -169,6 +169,22 @@ function Sidebar({
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
   useCloseOnBack(isMobile && openMobile, () => setOpenMobile(false))
 
+  const isDrawerOpen = isMobile && openMobile
+  // Non-modal drawer: lock background scroll without react-remove-scroll's
+  // padding compensation (which shifts full-bleed content). Plain
+  // `overflow: hidden` prevents page scroll/touch-scroll behind the drawer
+  // with no layout shift; restored on close.
+  React.useEffect(() => {
+    if (!isDrawerOpen) {
+      return
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isDrawerOpen])
+
   const pathname = usePathname()
   const prevPathnameRef = React.useRef(pathname)
   React.useEffect(() => {
@@ -209,13 +225,15 @@ function Sidebar({
       >
         {/* Non-modal Sheets render no overlay (Radix mounts DialogOverlay
         for modal dialogs only), so the drawer brings its own dimming layer.
-        It sits below the panel (z-40 vs z-50) and tap closes the drawer. */}
+        It sits below the panel (z-40 vs z-50), tap closes the drawer, and
+        touch-none + overscroll-contain keep touch/wheel gestures starting on
+        the backdrop from scrolling the locked page behind it. */}
         {openMobile ? (
           <div
             aria-hidden="true"
             data-slot="sidebar-backdrop"
             onClick={() => setOpenMobile(false)}
-            className="fixed inset-0 z-40 animate-in bg-black/10 fade-in-0 duration-100 supports-backdrop-filter:backdrop-blur-xs"
+            className="fixed inset-0 z-40 touch-none animate-in overscroll-contain bg-black/10 fade-in-0 duration-100 supports-backdrop-filter:backdrop-blur-xs"
           />
         ) : null}
         <SheetContent

@@ -55,6 +55,7 @@ describe("mobile Sidebar", () => {
   beforeEach(() => {
     rootProps.seen.length = 0;
     pathnameState.current = "/";
+    document.body.style.overflow = "";
   });
 
   it("renders the drawer non-modal so opening it cannot shift body layout", async () => {
@@ -87,6 +88,40 @@ describe("mobile Sidebar", () => {
     ) as HTMLElement | null;
     expect(backdrop).toBeInTheDocument();
     expect(backdrop?.className).toContain("bg-black/10");
+  });
+
+  it("locks background scroll while open and restores it on close", async () => {
+    const user = userEvent.setup();
+    renderMobileSidebar();
+
+    expect(document.body.style.overflow).not.toBe("hidden");
+
+    await user.click(screen.getByRole("button", { name: "Toggle Sidebar" }));
+    await screen.findByRole("dialog");
+    expect(document.body.style.overflow).toBe("hidden");
+
+    const backdrop = document.querySelector(
+      '[data-slot="sidebar-backdrop"]'
+    ) as HTMLElement | null;
+    expect(backdrop).not.toBeNull();
+    if (backdrop) {
+      await user.click(backdrop);
+    }
+    expect(document.body.style.overflow).not.toBe("hidden");
+  });
+
+  it("blocks background touch gestures on the backdrop", async () => {
+    const user = userEvent.setup();
+    renderMobileSidebar();
+
+    await user.click(screen.getByRole("button", { name: "Toggle Sidebar" }));
+    await screen.findByRole("dialog");
+
+    const backdrop = document.querySelector(
+      '[data-slot="sidebar-backdrop"]'
+    ) as HTMLElement | null;
+    expect(backdrop?.className).toContain("touch-none");
+    expect(backdrop?.className).toContain("overscroll-contain");
   });
 
   it("closes the drawer when the backdrop is tapped", async () => {
