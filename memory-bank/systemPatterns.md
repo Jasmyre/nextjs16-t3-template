@@ -185,9 +185,9 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 
 ### `unstable_cache` for page-visit reads (in use)
 
-- Repository reads in `src/data/*` are wrapped with the shared `cached()` helper (`src/lib/db-cache.ts`) around `unstable_cache(fn, keyParts, { tags, revalidate: 60 })`, so repeat page visits share one cached result instead of issuing a fresh Prisma query per visit. Cache keys are `keyParts` plus the call arguments — user-scoped reads stay isolated per caller via their per-user argument (never share one wrapper across users without one).
+- Repository reads in `src/data/*` are wrapped with the shared `cached()` helper (`src/lib/db-cache.ts`) around `unstable_cache(fn, keyParts, { tags, revalidate: 10 })`, so repeat page visits share one cached result instead of issuing a fresh Prisma query per visit. Cache keys are `keyParts` plus the call arguments — user-scoped reads stay isolated per caller via their per-user argument (never share one wrapper across users without one).
 - Tag vocabulary lives in `src/lib/cache-tags.ts` and is intentionally coarse and static (`posts:list`, `posts:item`, `dashboard:stats`, `admin:users`, `users:by-id`): `unstable_cache` tags cannot vary per call argument, so any post write clears every post-list-shaped read and any role write clears the admin list plus the session user lookups. Writes are rare; page visits are not.
-- Wrapped reads: `listAllPosts`, `listPostsByAuthor`, `getPostByIdWithAuthor`, `getLatestPost`, `getDashboardStats`, `getUserById` (the `jwt()` hot path — role changes propagate within ~60s, mitigated by tag invalidation below), `getAllUsers`. Deliberately uncached: `getUserByEmail` (credential checks must stay fresh), raw `getPostById` (row-level permission checks), all writes.
+- Wrapped reads: `listAllPosts`, `listPostsByAuthor`, `getPostByIdWithAuthor`, `getLatestPost`, `getDashboardStats`, `getUserById` (the `jwt()` hot path — role changes propagate within ~10s worst-case, immediate on `updateRoles` via tag invalidation below), `getAllUsers`. Deliberately uncached: `getUserByEmail` (credential checks must stay fresh), raw `getPostById` (row-level permission checks), all writes.
 - Cache-hit deserialization revives `Date` fields as strings — every consumer already tolerates `Date | string` (router `DateLike`, `formatDate`, opaque session threading).
 
 ### `cacheComponents` (Automatic component-level caching)
@@ -217,7 +217,7 @@ Forgetting to `await` these returns a Promise instead of the value, causing subt
 ### TanStack Query dehydration
 
 - Server-fetched queries are serialized with SuperJSON via `shouldDehydrateQuery` (including pending queries for Suspense compatibility).
-- The client hydrates from this serialized cache; `staleTime: 60s` (matching the server `unstable_cache` window) prevents immediate refetch after hydration.
+- The client hydrates from this serialized cache; `staleTime: 10s` (matching the server `unstable_cache` window) prevents immediate refetch after hydration.
 
 ### On-demand revalidation (in use)
 

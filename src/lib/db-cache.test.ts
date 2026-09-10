@@ -10,7 +10,7 @@ import {
 
 describe("cached", () => {
   it("exposes the default revalidation window", () => {
-    expect(CACHE_REVALIDATE_SECONDS).toBe(60);
+    expect(CACHE_REVALIDATE_SECONDS).toBe(10);
   });
 
   it("returns a callable preserving arguments and result", async () => {

@@ -7,7 +7,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
  * Mutations invalidate by tag immediately, so this only bounds how long an
  * un-invalidated read can lag (stale-while-revalidate).
  */
-export const CACHE_REVALIDATE_SECONDS = 60;
+export const CACHE_REVALIDATE_SECONDS = 10;
 
 /**
  * Stale-while-revalidate profile for on-demand tag invalidation: serve the
