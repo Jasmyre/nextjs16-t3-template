@@ -47,3 +47,13 @@ _Avoid_: Drawer, popup, modal
 **Back-close overlay**:
 A Dialog or Sheet that pushes a history entry while open so the browser Back button closes it instead of navigating away.
 _Avoid_: Treating DropdownMenu, Popover, or Tooltip as back-close overlays — those are anchored transients that dismiss on outside interaction
+
+## PWA language
+
+**Install icon family**:
+The committed icon variants that identify the installed web application across platforms: standard icons, a maskable icon, and the Apple touch icon. They are derived from one source image so the install identity remains consistent.
+_Avoid_: Using "favicon" for every install icon; the favicon is the source asset, not the full family.
+
+**Apple launch screen**:
+An iOS home-screen launch image. This application uses a deliberately minimal generated set; it is separate from the install icon family.
+_Avoid_: Calling every iOS image an icon or assuming launch screens are required for installability.
