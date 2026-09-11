@@ -1,10 +1,20 @@
 import "@/styles/globals.css";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
+import {
+  PWA_APPLE_TOUCH_ICON,
+  PWA_APPLE_WEB_APP,
+  PWA_DESCRIPTION,
+  PWA_MANIFEST_URL,
+  PWA_METADATA_ICONS,
+  PWA_NAME,
+  PWA_SHORT_NAME,
+  PWA_VIEWPORT,
+} from "@/pwa";
 import { TRPCReactProvider } from "@/trpc/react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -20,14 +30,26 @@ const GOOGLE_SITE_VERIFICATION =
   env.GOOGLE_SITE_VERIFICATION ??
   "err:Environment_'GOOGLE_SITE_VERIFICATION'_Variable_Is_Not_Defined";
 
-const SITE_NAME = "Template";
-const DEFAULT_TITLE = `${SITE_NAME} | Next.js 16`;
-const DEFAULT_DESCRIPTION = "A modern Next.js 16 starter template.";
+const SITE_NAME = PWA_SHORT_NAME;
+const DEFAULT_TITLE = PWA_NAME;
+const DEFAULT_DESCRIPTION = PWA_DESCRIPTION;
 const DEFAULT_OG_IMAGE = "/thumbnail.png";
+
+export const viewport: Viewport = PWA_VIEWPORT;
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   applicationName: SITE_NAME,
+  manifest: PWA_MANIFEST_URL,
+  appleWebApp: PWA_APPLE_WEB_APP,
+  icons: {
+    apple: [PWA_APPLE_TOUCH_ICON],
+    icon: PWA_METADATA_ICONS.map((icon) => ({
+      sizes: icon.sizes,
+      type: icon.type,
+      url: icon.src,
+    })),
+  },
   keywords: ["nextjs", "template", "typescript", "t3", "starter"],
   title: {
     default: DEFAULT_TITLE,
