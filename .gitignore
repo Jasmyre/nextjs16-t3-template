@@ -61,3 +61,5 @@ install.log
 # Ignore volatile Memory Bank context files
 /memory-bank/activeContext.md
 /memory-bank/progress.md
+
+certificates

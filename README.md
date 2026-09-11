@@ -88,7 +88,7 @@ The app runs at `http://localhost:3000` by default.
 For PWA installability testing and LAN device access, run dev over HTTPS:
 
 ```bash
-npx next dev --turbo --experimental-https
+npm run dev:https
 ```
 
 On the first run you may be prompted for your password so mkcert can install its local CA; the generated `certificates/` are per-machine and gitignored — never commit them. Each developer regenerates their own certs on their first HTTPS run. The app is then reachable at `https://localhost:3000` locally and at the printed `https://<your-IP>:3000` Network URL from devices on the same network.
