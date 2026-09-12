@@ -59,8 +59,8 @@ An iOS home-screen launch image. This application uses a deliberately minimal ge
 _Avoid_: Calling every iOS image an icon or assuming launch screens are required for installability.
 
 **Service worker**:
-A script the browser runs in the background to serve cached files when the network is slow or gone. It never checks identity and never grants access; login, roles, and permission checks still happen on the server for every call.
-_Avoid_: Treating cached content as proof of access; the worker holds no session.
+A script the browser runs in the background to serve cached files when the network is slow or gone. It never checks identity and never grants access; login, roles, and permission checks still happen on the server for every call. It sends no push notifications and runs no background or periodic sync.
+_Avoid_: Treating cached content as proof of access; the worker holds no session. Expecting push notifications or background sync; the worker has none.
 
 **Routing policy**:
 The single rule set that decides what the service worker may serve from cache and what must always use the network. All pages with user content, all typed-transport calls, and all REST mount Operations always use the network; unknown future routes do the same by default.

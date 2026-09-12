@@ -282,3 +282,64 @@ describe("sw offline fallback", () => {
     }
   });
 });
+
+/**
+ * Pins the out-of-scope background surface (issue #45): push
+ * notifications, background sync, and periodic sync are explicitly absent —
+ * the worker source registers no push or sync handlers and no push or sync
+ * dependency is installed. Adopters inherit no undisclosed background
+ * behavior.
+ */
+describe("sw background behavior absence", () => {
+  const workerSource = (): string =>
+    readFileSync(
+      path.join(process.cwd(), "src", "app", "sw.ts"),
+      "utf8"
+    ).toLowerCase();
+
+  it("registers no push handlers", () => {
+    const source = workerSource();
+    for (const token of [
+      '"push"',
+      "'push'",
+      "pushmanager",
+      "pushsubscription",
+      "shownotification",
+    ]) {
+      expect(source).not.toContain(token);
+    }
+  });
+
+  it("runs no background or periodic sync", () => {
+    const source = workerSource();
+    for (const token of [
+      '"sync"',
+      "'sync'",
+      "backgroundsync",
+      "periodicsync",
+      "syncevent",
+    ]) {
+      expect(source).not.toContain(token);
+    }
+  });
+
+  it("pulls in no push or sync dependencies", () => {
+    const manifest = JSON.parse(
+      readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+    ) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const names = [
+      ...Object.keys(manifest.dependencies ?? {}),
+      ...Object.keys(manifest.devDependencies ?? {}),
+    ].map((name) => name.toLowerCase());
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      expect(name).not.toContain("web-push");
+      expect(name).not.toContain("webpush");
+      expect(name).not.toContain("background-sync");
+      expect(name).not.toContain("periodic-sync");
+    }
+  });
+});

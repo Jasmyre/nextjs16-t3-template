@@ -93,6 +93,29 @@ npm run dev:https
 
 On the first run you may be prompted for your password so mkcert can install its local CA; the generated `certificates/` are per-machine and gitignored — never commit them. Each developer regenerates their own certs on their first HTTPS run. The app is then reachable at `https://localhost:3000` locally and at the printed `https://<your-IP>:3000` Network URL from devices on the same network.
 
+To verify on a same-Wi-Fi phone: join the same network, open the printed Network URL, and accept the browser's self-signed-certificate warning (the phone does not trust your machine's mkcert CA — testing only). Add to Home Screen then launches the installed standalone app.
+
+#### PWA audit gate (release bar)
+
+Run this checklist over a secure context before calling the PWA surface done — the production build on `http://localhost:3000` (localhost is trustworthy, and the worker registers there), or the LAN HTTPS URL above for device checks. The worker stays unregistered under plain `npm run dev` by design (`SerwistProvider` disables it in development), so the service-worker and offline checks must run against the production build:
+
+```bash
+npm run build
+npm run start
+```
+
+The build must keep the route statuses (`/offline` ◐, `/manifest.webmanifest` ○, `/api/openapi.json` ○, `/reference` ○) — no shell may flip to fully dynamic under the worker.
+
+1. DevTools → Application → Manifest: no errors, installability section green.
+2. DevTools → Application → Service workers: the worker is registered and controlling the page.
+3. Offline: DevTools → Application → Service workers → Offline (or Network → Offline), then reload — every failed navigation serves the generic `/offline` fallback ("You're offline" with a retry action), never a cached signed-in page or API response.
+
+Lighthouse has no PWA category since v12, so there is no PWA score to gate on; legacy Lighthouse ≤11 PWA audits are optional only.
+
+#### No background behavior
+
+Push notifications, background sync, and periodic sync are explicitly out of scope: the worker source registers no push or sync handlers (pinned by the `sw background behavior absence` suite), so adopters inherit no undisclosed background behavior.
+
 ## Environment Variables
 
 All required variables are validated in `src/env.js`. Keep `.env.example` in sync when adding or removing variables.
