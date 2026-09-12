@@ -21,9 +21,8 @@ export const PWA_MANIFEST_URL = "/manifest.webmanifest";
 /**
  * Theme chrome colors, rendered from the `--background` theme tokens in
  * `src/styles/globals.css` (light `:root`, dark `.dark`). The manifest
- * carries a single install-splash color, so it uses the light token that
- * matches the default first paint before theme hydration; the viewport
- * carries both. `src/pwa.test.ts` fails on drift from the tokens.
+ * carries a single install-splash color, so it uses the dark token; the
+ * viewport carries both. `src/pwa.test.ts` fails on drift from the tokens.
  */
 export const PWA_THEME_COLOR_LIGHT = "#e8ebed";
 

@@ -267,10 +267,10 @@ describe("theme-color drift", () => {
     expect(PWA_THEME_COLOR_DARK).toBe(themeBackgroundHex("dark"));
   });
 
-  it("paints the install splash with the light theme background", () => {
-    expect(PWA_BACKGROUND_COLOR).toBe(PWA_THEME_COLOR_LIGHT);
+  it("paints the install splash with the dark theme background", () => {
+    expect(PWA_BACKGROUND_COLOR).toBe(PWA_THEME_COLOR_DARK);
     expect(pwaManifest.background_color).toBe(PWA_BACKGROUND_COLOR);
-    expect(pwaManifest.theme_color).toBe(PWA_THEME_COLOR_LIGHT);
+    expect(pwaManifest.theme_color).toBe(PWA_THEME_COLOR_DARK);
   });
 });
 
