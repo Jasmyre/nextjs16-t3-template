@@ -29,7 +29,7 @@ export const PWA_THEME_COLOR_LIGHT = "#e8ebed";
 
 export const PWA_THEME_COLOR_DARK = "#1a1a1a";
 
-export const PWA_BACKGROUND_COLOR = PWA_THEME_COLOR_LIGHT;
+export const PWA_BACKGROUND_COLOR = PWA_THEME_COLOR_DARK;
 
 type ManifestIcon = NonNullable<MetadataRoute.Manifest["icons"]>[number];
 
@@ -140,7 +140,7 @@ export const pwaManifest: MetadataRoute.Manifest = {
   scope: "/",
   short_name: PWA_SHORT_NAME,
   start_url: "/",
-  theme_color: PWA_THEME_COLOR_LIGHT,
+  theme_color: PWA_THEME_COLOR_DARK,
 };
 
 export const PWA_APPLE_WEB_APP = {

@@ -108,7 +108,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className="bg-background">
+      <body className="bg-background pb-[env(safe-area-inset-bottom)]">
         <TRPCReactProvider>
           <ThemeProvider
             attribute="class"

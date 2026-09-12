@@ -198,6 +198,23 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+@media all and (display-mode: standalone) {
+  html,
+  body {
+    height: 100%;
+    overflow: auto;
+    overscroll-behavior: none;
+  }
+
+  /* Apply this to your main layout or root wrapper element */
+  .__next,
+  #root-layout-wrapper {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Keeps momentum scrolling smooth */
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
