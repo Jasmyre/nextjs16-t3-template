@@ -4,7 +4,7 @@ import { ChevronRightIcon, MoonIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -85,16 +85,10 @@ export function NavMain({
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
-  const pathname = usePathname();
   const router = useRouter();
   const commandItems = getCommandItems(items);
 
   useCloseOnBack(isCommandOpen, () => setIsCommandOpen(false));
-
-  const isCurrentPath = (url: string) =>
-    url === "/"
-      ? pathname === url
-      : pathname === url || pathname.startsWith(`${url}/`);
 
   useEffect(() => {
     setMounted(true);
@@ -181,68 +175,11 @@ export function NavMain({
         <SidebarGroupLabel className="text-muted-foreground">
           {groupLabel}
         </SidebarGroupLabel>
-        <SidebarMenu>
-          {items.map((item) => {
-            if (!item.items?.length) {
-              return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className="hover:bg-muted data-[active=true]:bg-accent"
-                    isActive={isCurrentPath(item.url)}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.url}>
-                      {item.icon}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            }
-
-            return (
-              <Collapsible
-                asChild
-                className="group/collapsible"
-                defaultOpen={item.isActive}
-                key={item.title}
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      className="hover:bg-muted data-[active=true]:bg-accent"
-                      isActive={isCurrentPath(item.url)}
-                      tooltip={item.title}
-                    >
-                      {item.icon}
-                      <span>{item.title}</span>
-                      <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton
-                            asChild
-                            className="hover:bg-muted"
-                            isActive={isCurrentPath(subItem.url)}
-                          >
-                            <Link href={subItem.url}>
-                              {subItem.icon}
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            );
-          })}
-        </SidebarMenu>
+        <Suspense
+          fallback={<NavMenu isCurrentPath={() => false} items={items} />}
+        >
+          <NavMenuWithPathname items={items} />
+        </Suspense>
       </SidebarGroup>
 
       <SidebarGroup>
@@ -263,5 +200,89 @@ export function NavMain({
         </SidebarMenu>
       </SidebarGroup>
     </>
+  );
+}
+
+function NavMenuWithPathname({ items }: { items: NavMainItem[] }) {
+  const pathname = usePathname();
+
+  const isCurrentPath = (url: string) =>
+    url === "/"
+      ? pathname === url
+      : pathname === url || pathname.startsWith(`${url}/`);
+
+  return <NavMenu isCurrentPath={isCurrentPath} items={items} />;
+}
+
+function NavMenu({
+  isCurrentPath,
+  items,
+}: {
+  isCurrentPath: (url: string) => boolean;
+  items: NavMainItem[];
+}) {
+  return (
+    <SidebarMenu>
+      {items.map((item) => {
+        if (!item.items?.length) {
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                asChild
+                className="hover:bg-muted data-[active=true]:bg-accent"
+                isActive={isCurrentPath(item.url)}
+                tooltip={item.title}
+              >
+                <Link href={item.url}>
+                  {item.icon}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        }
+
+        return (
+          <Collapsible
+            asChild
+            className="group/collapsible"
+            defaultOpen={item.isActive}
+            key={item.title}
+          >
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                  className="hover:bg-muted data-[active=true]:bg-accent"
+                  isActive={isCurrentPath(item.url)}
+                  tooltip={item.title}
+                >
+                  {item.icon}
+                  <span>{item.title}</span>
+                  <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  {item.items.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.title}>
+                      <SidebarMenuSubButton
+                        asChild
+                        className="hover:bg-muted"
+                        isActive={isCurrentPath(subItem.url)}
+                      >
+                        <Link href={subItem.url}>
+                          {subItem.icon}
+                          <span>{subItem.title}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+        );
+      })}
+    </SidebarMenu>
   );
 }
