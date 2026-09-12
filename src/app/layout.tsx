@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
+import { isServiceWorkerEnabled } from "@/lib/sw-dev";
 import { cn } from "@/lib/utils";
 import {
   PWA_APPLE_TOUCH_ICON,
@@ -117,13 +118,22 @@ export default function RootLayout({
           >
             {/*
              * Offline shell registration (issue #43): disabled in dev so the
-             * Turbopack dev loop stays worker-free; in production the worker
+             * Turbopack dev loop stays worker-free, unless explicitly opted
+             * in with `NEXT_PUBLIC_SW_IN_DEV=1` (`npm run dev:https:lan:sw`)
+             * for on-device installability testing — Chrome only offers
+             * "Install app" over a plain shortcut while a worker with a
+             * fetch handler is registered. In production the worker
              * registers at SW_URL without navigation-triggered caching and
              * never force-reloads an active session on update or reconnect.
              */}
             <SerwistProvider
               cacheOnNavigation={false}
-              disable={process.env.NODE_ENV === "development"}
+              disable={
+                !isServiceWorkerEnabled({
+                  nodeEnv: process.env.NODE_ENV,
+                  optIn: process.env.NEXT_PUBLIC_SW_IN_DEV,
+                })
+              }
               options={{ scope: SW_SCOPE }}
               reloadOnOnline={false}
               swUrl={SW_URL}

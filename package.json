@@ -77,6 +77,8 @@
     "db:studio": "prisma studio",
     "dev": "next dev --turbo",
     "dev:https": "next dev --turbo --experimental-https",
+    "dev:https:lan": "node scripts/dev-lan.mjs",
+    "dev:https:lan:sw": "node scripts/dev-lan.mjs --sw",
     "postinstall": "prisma generate",
     "preview": "next build && next start",
     "pwa:assets": "node scripts/pwa-assets.mjs",
