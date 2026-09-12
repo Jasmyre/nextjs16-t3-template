@@ -1,13 +1,15 @@
 import { WifiOff } from "lucide-react";
 import Link from "next/link";
+import { RetryButton } from "@/components/retry-button";
 import { Button } from "@/components/ui/button";
 
 /**
- * Generic public fallback (issue #43): the only offline document the worker
- * serves. Fully static — no session read, no search params — so the
+ * Generic public fallback (issues #43, #44): the only offline document the
+ * worker serves. Fully static — no session read, no search params — so the
  * precache holds one deployment-constant copy and the proxy needs no
- * session to serve it. Issue #44 owns graceful marketing degradation and
- * standalone styling refinements on top of this page.
+ * session to serve it. Recovery retries the failed navigation (restoring
+ * the page when back online) instead of linking to a signed-in page that
+ * would fail offline and loop back here.
  */
 export default function OfflinePage() {
   return (
@@ -23,9 +25,7 @@ export default function OfflinePage() {
         was lost.
       </p>
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-        <Button asChild>
-          <Link href="/">Try again</Link>
-        </Button>
+        <RetryButton />
         <Button asChild variant="outline">
           <Link href="/landing">Back to landing</Link>
         </Button>

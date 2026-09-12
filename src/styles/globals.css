@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@custom-variant standalone {
+  @media (display-mode: standalone) {
+    @slot;
+  }
+}
+
 @theme {
   --font-sans:
     var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
@@ -199,6 +205,20 @@
   body {
     letter-spacing: var(--tracking-normal);
     @apply bg-background text-foreground;
+  }
+  /*
+   * Installed-mode chrome (issue #44): with viewport-fit=cover the page
+   * extends under the notch and status bar, so standalone mode alone pads
+   * the viewport by the safe-area insets. Browser mode is untouched. No
+   * second layout system lives here — safe-area handling only.
+   */
+  @media (display-mode: standalone) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+    }
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {

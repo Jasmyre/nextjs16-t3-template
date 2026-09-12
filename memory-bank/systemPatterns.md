@@ -131,6 +131,7 @@ Status in this codebase: `page.tsx` (7), `layout.tsx` (4, incl. route-group layo
 - Export a default function and a `config` object with a `matcher` pattern.
 - Do not create a `middleware.ts` file — use `proxy.ts`.
 - Route vocabulary lives in `src/routes.ts`: `LANDING_PATH` (`/landing`), `publicRoutes`, `authRoutes`, `adminRoutes`, `apiAuthPrefix`, `DEFAULT_LOGIN_REDIRECT`, and `homePathFor(isLoggedIn)` (the session-aware home/dashboard link used by error pages). Proxy rules: auth routes redirect signed-in users to `DEFAULT_LOGIN_REDIRECT`; signed-in users on `/landing` are sent to `/`; anyone else on a non-public, non-auth route is sent to `/landing`.
+- The proxy `config.matcher` must stay an inline static string: Next.js statically parses it at build time, so importing it from another module fails the build ("can't recognize the exported `config` field"). Its static-file exclusions keep the worker (`/sw.js`), the manifest, and the generated install assets outside the proxy — pinned behaviorally by `src/proxy.test.ts`, which parses the matcher from source instead of importing `next-auth` into the unit suite.
 
 ### Route groups & layout composition
 
