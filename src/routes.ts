@@ -1,6 +1,11 @@
 export const LANDING_PATH = "/landing";
 
-export const publicRoutes = [LANDING_PATH, "/maintenance", "/reference"];
+export const publicRoutes = [
+  LANDING_PATH,
+  "/maintenance",
+  "/offline",
+  "/reference",
+];
 
 export const authRoutes = [
   "/auth",

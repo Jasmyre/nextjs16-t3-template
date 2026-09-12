@@ -57,3 +57,19 @@ _Avoid_: Using "favicon" for every install icon; the favicon is the source asset
 **Apple launch screen**:
 An iOS home-screen launch image. This application uses a deliberately minimal generated set; it is separate from the install icon family.
 _Avoid_: Calling every iOS image an icon or assuming launch screens are required for installability.
+
+**Service worker**:
+A script the browser runs in the background to serve cached files when the network is slow or gone. It never checks identity and never grants access; login, roles, and permission checks still happen on the server for every call.
+_Avoid_: Treating cached content as proof of access; the worker holds no session.
+
+**Routing policy**:
+The single rule set that decides what the service worker may serve from cache and what must always use the network. All pages with user content, all typed-transport calls, and all REST mount Operations always use the network; unknown future routes do the same by default.
+_Avoid_: Caching API answers or signed-in pages "for speed"; freshness rules live on the server, not in the worker.
+
+**Precache**:
+The fixed list of public files stored during install: versioned build files, public fonts and icons, the manifest, the static Document, and public marketing pages that never change per user. Entries carry a deployment revision, so an update replaces them instead of expiring them over time.
+_Avoid_: Adding user-specific or login-dependent pages; precache holds public files only.
+
+**Offline fallback**:
+The one generic public page shown when a navigation fails without a network. It is never a signed-in page and never API data.
+_Avoid_: One fallback per page; there is exactly one.

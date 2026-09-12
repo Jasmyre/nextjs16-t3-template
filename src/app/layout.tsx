@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 
+import { SerwistProvider } from "@serwist/next/react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -15,6 +16,7 @@ import {
   PWA_SHORT_NAME,
   PWA_VIEWPORT,
 } from "@/pwa";
+import { SW_SCOPE, SW_URL } from "@/sw-policy";
 import { TRPCReactProvider } from "@/trpc/react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -113,7 +115,21 @@ export default function RootLayout({
             disableTransitionOnChange
             enableSystem
           >
-            {children}
+            {/*
+             * Offline shell registration (issue #43): disabled in dev so the
+             * Turbopack dev loop stays worker-free; in production the worker
+             * registers at SW_URL without navigation-triggered caching and
+             * never force-reloads an active session on update or reconnect.
+             */}
+            <SerwistProvider
+              cacheOnNavigation={false}
+              disable={process.env.NODE_ENV === "development"}
+              options={{ scope: SW_SCOPE }}
+              reloadOnOnline={false}
+              swUrl={SW_URL}
+            >
+              {children}
+            </SerwistProvider>
           </ThemeProvider>
         </TRPCReactProvider>
       </body>
