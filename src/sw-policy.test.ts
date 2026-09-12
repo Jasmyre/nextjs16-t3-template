@@ -72,6 +72,27 @@ describe("sw precache inventory", () => {
     expect(SW_PRECACHED_URLS).not.toContain("/landing");
   });
 
+  it("never precaches signed-in pages or api responses", () => {
+    // Offline navigation failures receive the generic fallback — never a
+    // cached signed-in page or cached API data (issue #44).
+    for (const pathname of [
+      "/",
+      "/posts",
+      "/posts/new",
+      "/posts/1/edit",
+      "/admin",
+      "/auth",
+      "/auth/error",
+      "/api/auth/session",
+      "/api/trpc/post.list,post.getById?batch=1&input={}",
+      "/api/v1/posts",
+      "/api/v1/posts/1",
+      "/api/v1/dashboard/stats",
+    ]) {
+      expect(SW_PRECACHED_URLS).not.toContain(pathname);
+    }
+  });
+
   it("serves the precached set from cache instead of the network", () => {
     for (const url of SW_PRECACHED_URLS) {
       expect(decideSwRequest(snapshot(`${ORIGIN}${url}`))).toBe("precached");

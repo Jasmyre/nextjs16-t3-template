@@ -73,3 +73,7 @@ _Avoid_: Adding user-specific or login-dependent pages; precache holds public fi
 **Offline fallback**:
 The one generic public page shown when a navigation fails without a network. It is never a signed-in page and never API data.
 _Avoid_: One fallback per page; there is exactly one.
+
+**Standalone styling**:
+Styling that applies only when the app runs installed, limited to safe-area and browser-chrome adjustments through native standalone display-mode media (or a small framework-native variant for composition). There is no second layout system for installed mode.
+_Avoid_: A legacy display-mode plugin; restyling layouts per display mode.

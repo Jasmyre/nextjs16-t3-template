@@ -63,6 +63,12 @@ export default auth((req) => {
 });
 
 export const config = {
+  // The matcher stays inline: Next.js statically parses `config.matcher`
+  // at build time, so it cannot be imported from another module. The
+  // static-file exclusions below keep the worker, the manifest, and the
+  // generated install assets outside the proxy (pinned by
+  // `src/proxy.test.ts`); pages still run through the proxy so landing,
+  // auth, and admin gating stay authoritative with the worker installed.
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],

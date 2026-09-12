@@ -25,6 +25,10 @@ const SPLASH_SIZE_PATTERN = /apple-splash-(\d+)-(\d+)\.png/;
 const STARTUP_MEDIA_PATTERN =
   /^\(device-width: (\d+)px\) and \(device-height: (\d+)px\) and \(-webkit-device-pixel-ratio: ([23])\) and \(orientation: portrait\)$/;
 const WHITESPACE_PATTERN = /\s+/;
+const DISPLAY_PROPERTY_PATTERN = /display\s*:/;
+const POSITION_PROPERTY_PATTERN = /position\s*:/;
+const GRID_TEMPLATE_PATTERN = /grid-template/;
+const FLEX_DIRECTION_PATTERN = /flex-direction/;
 
 const publicDir = path.join(process.cwd(), "public");
 
@@ -267,5 +271,95 @@ describe("theme-color drift", () => {
     expect(PWA_BACKGROUND_COLOR).toBe(PWA_THEME_COLOR_LIGHT);
     expect(pwaManifest.background_color).toBe(PWA_BACKGROUND_COLOR);
     expect(pwaManifest.theme_color).toBe(PWA_THEME_COLOR_LIGHT);
+  });
+});
+
+const readGlobalsCss = (): string =>
+  readFileSync(
+    path.join(process.cwd(), "src", "styles", "globals.css"),
+    "utf8"
+  );
+
+const standaloneBlocks = (css: string): string[] => {
+  const blocks: string[] = [];
+  const marker = "@media (display-mode: standalone)";
+  let from = 0;
+  while (true) {
+    const start = css.indexOf(marker, from);
+    if (start === -1) {
+      return blocks;
+    }
+    const open = css.indexOf("{", start);
+    if (open === -1) {
+      throw new Error("unterminated standalone media query in globals.css");
+    }
+    let depth = 0;
+    let end = open;
+    while (end < css.length) {
+      if (css[end] === "{") {
+        depth += 1;
+      } else if (css[end] === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          break;
+        }
+      }
+      end += 1;
+    }
+    blocks.push(css.slice(open + 1, end));
+    from = end + 1;
+  }
+};
+
+/**
+ * Standalone style rules, excluding `@custom-variant` definitions: variant
+ * bodies carry the `@slot` composition hook, not style rules.
+ */
+const standaloneRules = (css: string): string[] =>
+  standaloneBlocks(css).filter((block) => !block.includes("@slot"));
+
+/**
+ * Pins standalone-only styling (issue #44): native display-mode media for
+ * demonstrated safe-area and browser-chrome adjustments, a small
+ * framework-native variant for composition, no legacy display-mode plugin,
+ * and no second layout system for installed mode.
+ */
+describe("standalone styling", () => {
+  it("handles the notch safe area through native standalone media", () => {
+    const rules = standaloneRules(readGlobalsCss());
+    expect(rules.length).toBeGreaterThan(0);
+    const declarations = rules.join("\n");
+    for (const inset of [
+      "safe-area-inset-top",
+      "safe-area-inset-right",
+      "safe-area-inset-bottom",
+      "safe-area-inset-left",
+    ]) {
+      expect(declarations).toContain(`env(${inset})`);
+    }
+  });
+
+  it("keeps standalone rules to safe-area handling, not a second layout", () => {
+    for (const block of standaloneRules(readGlobalsCss())) {
+      expect(block).toContain("safe-area-inset");
+      expect(block).not.toMatch(DISPLAY_PROPERTY_PATTERN);
+      expect(block).not.toMatch(POSITION_PROPERTY_PATTERN);
+      expect(block).not.toMatch(GRID_TEMPLATE_PATTERN);
+      expect(block).not.toMatch(FLEX_DIRECTION_PATTERN);
+    }
+  });
+
+  it("offers a framework-native variant for standalone composition", () => {
+    expect(readGlobalsCss()).toContain("@custom-variant standalone");
+  });
+
+  it("avoids the legacy display-mode plugin", () => {
+    expect(readGlobalsCss().toLowerCase()).not.toContain("displaymodes");
+    const manifest = JSON.parse(
+      readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+    ) as { dependencies?: Record<string, string> };
+    for (const name of Object.keys(manifest.dependencies ?? {})) {
+      expect(name.toLowerCase()).not.toContain("displaymode");
+    }
   });
 });
