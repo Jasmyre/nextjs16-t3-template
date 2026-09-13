@@ -4,7 +4,7 @@ import { ChevronRightIcon, MoonIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { type ReactNode, Suspense, useEffect, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -87,8 +87,11 @@ export function NavMain({
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const commandItems = getCommandItems(items);
+  const skipHistoryOnCloseRef = useRef<boolean | null>(null);
 
-  useCloseOnBack(isCommandOpen, () => setIsCommandOpen(false));
+  useCloseOnBack(isCommandOpen, () => setIsCommandOpen(false), {
+    skipHistoryOnCloseRef,
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -110,6 +113,15 @@ export function NavMain({
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  const handleCommandSelect = (url: string) => {
+    // router.push updates location.href asynchronously; without the skip flag
+    // the useCloseOnBack cleanup would see an unchanged href and call
+    // history.back(), cancelling the navigation.
+    skipHistoryOnCloseRef.current = true;
+    setIsCommandOpen(false);
+    router.push(url);
+  };
+
   return (
     <>
       <Dialog onOpenChange={setIsCommandOpen} open={isCommandOpen}>
@@ -128,9 +140,9 @@ export function NavMain({
                     className="cursor-pointer opacity-70 transition-all duration-200 hover:opacity-100"
                     key={`${item.title}-${item.url}`}
                     onSelect={() => {
-                      router.push(item.url);
-                      setIsCommandOpen(false);
+                      handleCommandSelect(item.url);
                     }}
+                    value={`${item.title} ${item.url}`}
                   >
                     {item.icon && <span className="mr-2">{item.icon}</span>}
                     <span>{item.title}</span>

@@ -122,6 +122,24 @@ describe("useCloseOnBack", () => {
     expect(back).not.toHaveBeenCalled();
   });
 
+  it("consumes the skip flag one-shot so the next close pops normally", () => {
+    const back = backSpy();
+    const skipHistoryOnCloseRef = { current: true as boolean | null };
+
+    const first = renderHook(() =>
+      useCloseOnBack(true, vi.fn(), { skipHistoryOnCloseRef })
+    );
+    first.unmount();
+    expect(back).not.toHaveBeenCalled();
+    expect(skipHistoryOnCloseRef.current).toBeNull();
+
+    const second = renderHook(() =>
+      useCloseOnBack(true, vi.fn(), { skipHistoryOnCloseRef })
+    );
+    second.unmount();
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+
   it("does not re-push when onClose identity changes", () => {
     const push = pushStateSpy();
 

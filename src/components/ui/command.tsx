@@ -4,6 +4,7 @@ import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 
 import { cn } from "@/lib/utils"
+import { useCloseOnBack } from "@/hooks/use-close-on-back"
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,9 @@ function CommandDialog({
   className?: string
   showCloseButton?: boolean
 }) {
+  const isOpen = props.open ?? false
+  const onOpenChange = props.onOpenChange
+  useCloseOnBack(isOpen, () => onOpenChange?.(false))
   return (
     <Dialog {...props}>
       <DialogHeader className="sr-only">

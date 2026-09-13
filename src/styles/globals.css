@@ -230,11 +230,41 @@
    * second layout system lives here — safe-area handling only.
    */
   @media (display-mode: standalone) {
+    /*
+     * Installed-mode focus chrome (PWA): touch-driven, no keyboard focus
+     * rings. Neutralize every outline/ring source while preserving real
+     * shadows — zero the Tailwind ring shadow vars instead of nuking
+     * box-shadow, so --tw-shadow / --tw-inset-shadow still render.
+     */
+    *,
+    *::before,
+    *::after {
+      --tw-ring-offset-shadow: 0 0 #0000 !important;
+      --tw-ring-shadow: 0 0 #0000 !important;
+      --tw-ring-offset-width: 0px !important;
+      --tw-ring-color: transparent !important;
+      --tw-inset-ring-shadow: 0 0 #0000 !important;
+      outline: none !important;
+      outline-offset: 0 !important;
+    }
+
+    *:focus,
+    *:focus-visible,
+    *:focus-within {
+      outline: none !important;
+      outline-offset: 0 !important;
+    }
+
     body {
       padding-top: env(safe-area-inset-top);
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
+
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
   }
   button:not(:disabled),

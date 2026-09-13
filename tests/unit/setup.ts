@@ -3,6 +3,28 @@ import { vi } from "vitest";
 
 process.env.SKIP_ENV_VALIDATION = "true";
 
+// cmdk (command palette) requires ResizeObserver, which jsdom lacks.
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe(): void {
+      // Intentional no-op stub for jsdom.
+    }
+    unobserve(): void {
+      // Intentional no-op stub for jsdom.
+    }
+    disconnect(): void {
+      // Intentional no-op stub for jsdom.
+    }
+  } as unknown as typeof ResizeObserver;
+}
+
+if (
+  typeof Element !== "undefined" &&
+  typeof Element.prototype.scrollIntoView !== "function"
+) {
+  Element.prototype.scrollIntoView = () => undefined;
+}
+
 vi.mock("next/navigation", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/navigation")>();
   return {

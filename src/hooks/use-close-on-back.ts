@@ -79,7 +79,12 @@ function cleanupPushedEntry(
 
   try {
     const currentId = getHistoryStackId(window.history.state as HistoryState);
+    // One-shot: navigating hosts (e.g. command palette router.push) set this
+    // before closing so the async navigation isn't cancelled by history.back().
     const skipRequested = Boolean(skipHistoryOnCloseRef?.current);
+    if (skipHistoryOnCloseRef && skipRequested) {
+      skipHistoryOnCloseRef.current = null;
+    }
     const hrefUnchanged = openedHref === window.location.href;
 
     if (
