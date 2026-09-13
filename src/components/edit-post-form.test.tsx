@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -133,10 +133,13 @@ describe("EditPostForm", () => {
     render(<EditPostForm post={post} />);
 
     const config = mocks.mutationConfigs[0];
-    if (!config?.onError) {
+    const onError = config?.onError;
+    if (!onError) {
       throw new Error("expected onError to be set");
     }
-    config.onError({ message: "Failed to update post." });
+    act(() => {
+      onError({ message: "Failed to update post." });
+    });
 
     expect(
       await screen.findByText("Failed to update post.")

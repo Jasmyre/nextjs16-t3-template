@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LatestPost } from "@/components/post";
@@ -79,7 +79,9 @@ describe("LatestPost", () => {
       throw new Error("expected useMutation to be called");
     }
 
-    await config.onSuccess?.();
+    await act(async () => {
+      await config.onSuccess?.();
+    });
 
     expect(mocks.invalidateMock).toHaveBeenCalled();
     await waitFor(() => {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PostCreateForm } from "@/components/post-create-form";
@@ -119,10 +119,13 @@ describe("PostCreateForm", () => {
     render(<PostCreateForm />);
 
     const config = mocks.mutationConfigs[0];
-    if (!config?.onError) {
+    const onError = config?.onError;
+    if (!onError) {
       throw new Error("expected onError to be set");
     }
-    config.onError({ message: "Failed to create post." });
+    act(() => {
+      onError({ message: "Failed to create post." });
+    });
 
     expect(
       await screen.findByText("Failed to create post.")
