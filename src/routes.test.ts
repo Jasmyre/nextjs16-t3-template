@@ -12,6 +12,7 @@ describe("routes", () => {
   it("treats the landing and maintenance pages as public", () => {
     expect(publicRoutes).toContain("/landing");
     expect(publicRoutes).toContain("/maintenance");
+    expect(publicRoutes).toContain("/offline");
     expect(publicRoutes).not.toContain("/");
   });
 

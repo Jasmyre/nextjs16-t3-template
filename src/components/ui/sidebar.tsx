@@ -185,44 +185,42 @@ function Sidebar({
     }
   }, [isDrawerOpen])
 
-  const pathname = usePathname()
-  const prevPathnameRef = React.useRef(pathname)
-  React.useEffect(() => {
-    if (prevPathnameRef.current !== pathname) {
-      prevPathnameRef.current = pathname
-      if (isMobile && openMobile) {
-        setOpenMobile(false)
-      }
-    }
-  }, [pathname, isMobile, openMobile, setOpenMobile])
-
   if (collapsible === "none") {
     return (
-      <div
-        data-slot="sidebar"
-        className={cn(
-          "flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </div>
+      <>
+        <React.Suspense fallback={null}>
+          <SidebarRouteCloser />
+        </React.Suspense>
+        <div
+          data-slot="sidebar"
+          className={cn(
+            "flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground",
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </div>
+      </>
     )
   }
 
   if (isMobile) {
     return (
-      <Sheet
-        open={openMobile}
-        onOpenChange={setOpenMobile}
-        // Non-modal: a nav drawer must not lock body scroll. The modal
-        // default drives react-remove-scroll (body overflow hidden +
-        // padding compensation), which shifts the full-bleed page behind
-        // the drawer on open.
-        modal={false}
-        {...props}
-      >
+      <>
+        <React.Suspense fallback={null}>
+          <SidebarRouteCloser />
+        </React.Suspense>
+        <Sheet
+          open={openMobile}
+          onOpenChange={setOpenMobile}
+          // Non-modal: a nav drawer must not lock body scroll. The modal
+          // default drives react-remove-scroll (body overflow hidden +
+          // padding compensation), which shifts the full-bleed page behind
+          // the drawer on open.
+          modal={false}
+          {...props}
+        >
         {/* Non-modal Sheets render no overlay (Radix mounts DialogOverlay
         for modal dialogs only), so the drawer brings its own dimming layer.
         It sits below the panel (z-40 vs z-50), tap closes the drawer, and
@@ -255,19 +253,24 @@ function Sidebar({
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
-      </Sheet>
+        </Sheet>
+      </>
     )
   }
 
   return (
-    <div
-      className="group peer hidden text-sidebar-foreground md:block"
-      data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
-      data-variant={variant}
-      data-side={side}
-      data-slot="sidebar"
-    >
+    <>
+      <React.Suspense fallback={null}>
+        <SidebarRouteCloser />
+      </React.Suspense>
+      <div
+        className="group peer hidden text-sidebar-foreground md:block"
+        data-state={state}
+        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-variant={variant}
+        data-side={side}
+        data-slot="sidebar"
+      >
       {/* This is what handles the sidebar gap on desktop */}
       <div
         data-slot="sidebar-gap"
@@ -301,8 +304,25 @@ function Sidebar({
           {children}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
+}
+
+function SidebarRouteCloser() {
+  const { isMobile, openMobile, setOpenMobile } = useSidebar()
+  const pathname = usePathname()
+  const prevPathnameRef = React.useRef(pathname)
+  React.useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname
+      if (isMobile && openMobile) {
+        setOpenMobile(false)
+      }
+    }
+  }, [pathname, isMobile, openMobile, setOpenMobile])
+
+  return null
 }
 
 function SidebarTrigger({

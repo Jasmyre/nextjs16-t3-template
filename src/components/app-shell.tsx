@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { MainSidebar } from "@/components/main-sidebar";
 import type { NavMainItem } from "@/components/nav-main";
 import type { NavUserData } from "@/components/nav-user";
@@ -28,9 +28,6 @@ export function AppShell({
   navItems: NavMainItem[];
   user?: NavUserData | null;
 }) {
-  const pathname = usePathname();
-  const title = getSectionTitle(pathname, sectionTitleMap, "Home");
-
   return (
     <SidebarProvider>
       <MainSidebar navItems={navItems} user={user} />
@@ -38,10 +35,21 @@ export function AppShell({
         <header className="flex h-14 items-center gap-3 border-b px-4">
           <SidebarTrigger />
           <Separator className="h-5" orientation="vertical" />
-          <span className="font-medium text-sm">{title}</span>
+          <Suspense
+            fallback={<span className="font-medium text-sm">Home</span>}
+          >
+            <SectionTitle />
+          </Suspense>
         </header>
         {children}
       </SidebarInset>
     </SidebarProvider>
   );
+}
+
+function SectionTitle() {
+  const pathname = usePathname();
+  const title = getSectionTitle(pathname, sectionTitleMap, "Home");
+
+  return <span className="font-medium text-sm">{title}</span>;
 }
