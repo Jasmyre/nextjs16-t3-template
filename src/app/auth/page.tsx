@@ -15,8 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AuthPage() {
   return (
-    <div className="flex min-h-[80vh] items-center justify-center max-sm:px-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center max-sm:px-4">
+      <Card className="w-full max-w-md border-none bg-transparent drop-shadow-none">
         <CardHeader>
           <CardTitle className="font-bold text-2xl">
             Welcome to Authentication
@@ -50,7 +50,7 @@ export default function AuthPage() {
           <div className="mt-6 flex flex-col gap-10">
             <div className="relative">
               <Separator className="absolute top-[50%] bottom-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-border" />
-              <span className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-card px-4 text-muted-foreground">
+              <span className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] text-nowrap bg-background px-4 text-center text-muted-foreground">
                 OR CONTINUE WITH
               </span>
             </div>
