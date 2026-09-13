@@ -68,11 +68,27 @@ continues from there. After that, semver is strict: breaking = major.
 
 ## First run / template forks
 
-No tags exist yet, so the first merged conventional PR creates the first release
-PR (`0.1.0 → 0.1.1` for `fix:`, `→ 0.2.0` for `feat:`). Forks and template
-consumers keep the three config files as-is — just make sure
+## First run / template forks
+
+Tags use the plain form `v0.1.0` (`include-component-in-tag: false` — a
+single-package repo needs no component prefix).
+
+One manual bootstrap is required because the changelog uses GitHub-generated
+notes, and that API rejects a `previous_tag` that does not exist yet. Tag the
+current baseline once, then automation takes over:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+gh release create v0.1.0 --title "v0.1.0" --notes "Template baseline."
+```
+
+Then re-run the release workflow (`Actions → Release → Run workflow`). From
+there, the first merged conventional PR creates the first release PR
+(`0.1.0 → 0.1.1` for `fix:`, `→ 0.2.0` for `feat:`). Forks and template
+consumers do the same: keep the three config files as-is, make sure
 `.release-please-manifest.json` matches the `version` in `package.json`
-(`0.1.0` here) so the first bump computes correctly.
+(`0.1.0` here), tag the baseline, and go.
 
 ## Notes & troubleshooting
 
@@ -86,3 +102,9 @@ consumers keep the three config files as-is — just make sure
   (e.g. after fixing a commit message or editing config).
 - `private: true` in `package.json` is fine — nothing is published to npm;
   only GitHub tags + releases are created.
+- `Error: Invalid previous_tag parameter` means the baseline tag is missing —
+  do the one-time `git tag v0.1.0` + `gh release create` bootstrap above, then
+  re-run the workflow. Do not delete release tags afterwards; the notes API
+  needs them.
+- `commit could not be parsed` warnings for `Merge pull request #N …` commits
+  are harmless — release-please skips them and reads the PR titles instead.
