@@ -32,9 +32,9 @@ export function AppShell({
     <SidebarProvider>
       <MainSidebar navItems={navItems} user={user} />
       <SidebarInset>
-        <header className="flex h-14 items-center gap-3 border-b px-4">
+        <header className="flex h-14 items-center gap-3 border-t border-b px-4">
           <SidebarTrigger />
-          <Separator className="h-5" orientation="vertical" />
+          <Separator className="h-full" orientation="vertical" />
           <Suspense
             fallback={<span className="font-medium text-sm">Home</span>}
           >
