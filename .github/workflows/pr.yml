@@ -1,0 +1,186 @@
+name: PR checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  lint:
+    name: Lint / format (Ultracite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run typecheck:test
+
+  unit:
+    name: Unit tests (Vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test
+
+  integration:
+    name: Integration tests (Vitest + Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d app_test"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      SKIP_ENV_VALIDATION: "true"
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/app_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # tests/integration loads `.env.test` via vite's loadEnv, which would
+      # override CI env vars if the file exists — pin it to the service DB.
+      - name: Point test env at CI database
+        run: printf 'DATABASE_URL_TEST="%s"\n' "$DATABASE_URL_TEST" > .env.test
+      - run: npm run db:migrate
+      - run: npm run test:integration
+
+  e2e:
+    name: E2E tests (Playwright + Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d app_test"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/app_test
+      # Dummy values satisfy src/env.js validation; e2e only exercises the
+      # Credentials provider, never real OAuth or Upstash endpoints.
+      BASE_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+      AUTH_SECRET: ci-auth-secret-0123456789abcdef
+      GOOGLE_SITE_VERIFICATION: ci-dummy
+      GITHUB_CLIENT_ID: ci-dummy
+      GITHUB_CLIENT_SECRET: ci-dummy
+      GOOGLE_CLIENT_ID: ci-dummy
+      GOOGLE_CLIENT_SECRET: ci-dummy
+      UPSTASH_REDIS_REST_TOKEN: ci-dummy
+      UPSTASH_REDIS_REST_URL: https://dummy.upstash.io
+      NEXT_PUBLIC_IS_IN_MAINTENANCE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - name: Point test env at CI database
+        run: printf 'DATABASE_URL_TEST="%s"\n' "$DATABASE_URL_TEST" > .env.test
+      - run: npm run db:migrate
+      - run: npm run test:e2e
+      - name: Upload Playwright test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results/
+          if-no-files-found: ignore
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d app_test"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
+      BASE_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+      AUTH_SECRET: ci-auth-secret-0123456789abcdef
+      GOOGLE_SITE_VERIFICATION: ci-dummy
+      GITHUB_CLIENT_ID: ci-dummy
+      GITHUB_CLIENT_SECRET: ci-dummy
+      GOOGLE_CLIENT_ID: ci-dummy
+      GOOGLE_CLIENT_SECRET: ci-dummy
+      UPSTASH_REDIS_REST_TOKEN: ci-dummy
+      UPSTASH_REDIS_REST_URL: https://dummy.upstash.io
+      NEXT_PUBLIC_IS_IN_MAINTENANCE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run build
