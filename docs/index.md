@@ -13,5 +13,6 @@ Start here. Internal design notes live in `memory-bank/`; domain vocabulary in `
 | [testing](testing.md) | Writing unit / integration / e2e tests |
 | [pwa](pwa.md) | Install icons, worker policy, offline, LAN device testing |
 | [operations](operations.md) | Maintenance mode, cache invalidation, logging, health checks |
+| [versioning](versioning.md) | Releasing — conventional commits, release PRs, cutting 1.0.0 |
 | [troubleshooting](troubleshooting.md) | Something is broken — env, OAuth, redirects, DB, PWA, e2e |
 | [adr/README](adr/README.md) | Recording or reading an architecture decision |

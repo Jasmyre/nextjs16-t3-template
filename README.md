@@ -16,6 +16,7 @@ A production-oriented T3-style starter built on Next.js 16 App Router, with inte
 | [docs/testing.md](docs/testing.md) | Unit / integration / e2e |
 | [docs/pwa.md](docs/pwa.md) | Install, worker, offline, LAN testing |
 | [docs/operations.md](docs/operations.md) | Maintenance, caching, monitoring |
+| [docs/versioning.md](docs/versioning.md) | Releasing (semver automation) |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Something is broken |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, gate, conventions |
 | [SECURITY.md](SECURITY.md) | Reporting + controls |

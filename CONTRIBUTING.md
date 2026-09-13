@@ -5,7 +5,10 @@
 1. Fork, then branch from `main`: `feat/<scope>`, `fix/<scope>`, `docs/<scope>`.
 2. Keep changes small and focused. Open an issue first for substantial work.
 3. Run the full gate before pushing (see below).
-4. Open a PR against `main` with: what changed, why, how to verify, migration notes if any.
+4. Open a PR against `main` with a **conventional title** (`feat: …`, `fix: …`, … —
+   enforced by CI) plus: what changed, why, how to verify, migration notes if any.
+   Squash-merge keeping the conventional title — it drives versioning
+   (see `docs/versioning.md`). Never bump `version` in `package.json` by hand.
 
 ## Local setup
 
