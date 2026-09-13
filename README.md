@@ -2,14 +2,38 @@
 
 A production-oriented T3-style starter built on Next.js 16 App Router, with integrated authentication, typed APIs, Prisma/PostgreSQL persistence, and modern UI primitives. It is designed as a practical foundation for teams that want strong defaults for auth, data access, and developer workflow while keeping the codebase straightforward to extend.
 
+## Docs
+
+| Doc | Use when… |
+|---|---|
+| [docs/index.md](docs/index.md) | Doc map |
+| [docs/env.md](docs/env.md) | Setting up `.env` |
+| [docs/deployment.md](docs/deployment.md) | Shipping |
+| [docs/architecture.md](docs/architecture.md) | Adding features (tiers, proxy, caching, tRPC) |
+| [docs/auth.md](docs/auth.md) | Sign-in, roles, PATs |
+| [docs/api.md](docs/api.md) | Calling `/api/v1` or `/api/trpc` |
+| [docs/database.md](docs/database.md) | Schema + migrations |
+| [docs/testing.md](docs/testing.md) | Unit / integration / e2e |
+| [docs/pwa.md](docs/pwa.md) | Install, worker, offline, LAN testing |
+| [docs/operations.md](docs/operations.md) | Maintenance, caching, monitoring |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Something is broken |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, gate, conventions |
+| [SECURITY.md](SECURITY.md) | Reporting + controls |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+
+Domain vocabulary: [CONTEXT.md](CONTEXT.md). Decisions: [docs/adr/](docs/adr/README.md).
+
 ## Core Features
 
-- Next.js 16 App Router architecture with server-first patterns
-- NextAuth v5 setup with Credentials, GitHub, and Google providers
+- Next.js 16 App Router architecture with server-first patterns (PPR static shells + `<Suspense>` dynamic holes)
+- NextAuth v5 setup with Credentials, GitHub, and Google providers (JWT sessions, role stamping)
+- ABAC roles (`ADMIN` / `MODERATOR` / `USER`) enforced at the controller tier
 - Prisma ORM with PostgreSQL datasource and migration workflow
-- tRPC server and React client integration for end-to-end typing
+- tRPC server + React client for end-to-end typing, plus a versioned REST mount (`/api/v1`) with OpenAPI Document (`/api/openapi.json`) and Scalar UI (`/reference`)
+- Personal access tokens (`Authorization: Bearer pat_…`) for external callers
 - Theme switching support with `next-themes`
 - Maintenance mode gate via `NEXT_PUBLIC_IS_IN_MAINTENANCE`
+- PWA: installable manifest, committed icon family, assets-only Serwist worker, single `/offline` fallback
 - Form validation with Zod and React Hook Form
 - Shared UI system based on shadcn-style component structure
 
@@ -17,28 +41,21 @@ A production-oriented T3-style starter built on Next.js 16 App Router, with inte
 
 ### Application Runtime
 
-- Next.js 16
-- React 19
-- TypeScript 5
-- NextAuth v5
-- tRPC v11
-- Prisma 7
-- PostgreSQL (`pg`)
+- Next.js 16.3 + React 19 + TypeScript 5
+- NextAuth v5 beta + `@auth/prisma-adapter`
+- tRPC v11 + TanStack Query + SuperJSON + `trpc-to-openapi`
+- Prisma 7 + PostgreSQL (`pg`)
+- `@t3-oss/env-nextjs` env validation, `server-only` guards, Upstash Redis rate limiting, Zod 4
 
 ### UI and Client Utilities
 
-- Tailwind CSS 4
-- Radix UI primitives
+- Tailwind CSS 4 + Radix UI + shadcn-style `src/components/ui`
 - `class-variance-authority`, `clsx`, `tailwind-merge`
-- `next-themes`
-- `react-hook-form` + `@hookform/resolvers`
-- `zod`
+- `next-themes`, `react-hook-form` + `@hookform/resolvers`, Serwist 9, Scalar API reference
 
 ### Tooling and Quality
 
-- Ultracite
-- Biome
-- Prisma CLI
+- Ultracite + Biome, Vitest 4 (unit + integration), Playwright e2e + instant-nav rig
 
 ## Prerequisites
 
@@ -67,7 +84,7 @@ On Windows PowerShell, use:
 Copy-Item .env.example .env
 ```
 
-3. Fill in all required values in `.env`.
+3. Fill in all required values in `.env` — see [docs/env.md](docs/env.md).
 
 4. Apply database schema and generate Prisma client:
 
@@ -85,203 +102,93 @@ The app runs at `http://localhost:3000` by default.
 
 ### Local HTTPS (optional)
 
-For PWA installability testing and LAN device access, run dev over HTTPS:
+For PWA installability testing and LAN device access, run dev over HTTPS — full guide in [docs/pwa.md](docs/pwa.md):
 
 ```bash
-npm run dev:https
+npm run dev:https          # local HTTPS only
+npm run dev:https:lan      # same-Wi-Fi phone testing
+npm run dev:https:lan:sw   # + service worker (install testing)
 ```
 
-On the first run you may be prompted for your password so mkcert can install its local CA; the generated `certificates/` are per-machine and gitignored — never commit them. Each developer regenerates their own certs on their first HTTPS run. The app is then reachable at `https://localhost:3000` locally and at the printed `https://<your-IP>:3000` Network URL from devices on the same network.
-
-To verify on a same-Wi-Fi phone: join the same network, open the printed Network URL, and accept the browser's self-signed-certificate warning (the phone does not trust your machine's mkcert CA — testing only). Add to Home Screen then launches the installed standalone app.
-
-#### PWA audit gate (release bar)
-
-Run this checklist over a secure context before calling the PWA surface done — the production build on `http://localhost:3000` (localhost is trustworthy, and the worker registers there), or the LAN HTTPS URL above for device checks. The worker stays unregistered under plain `npm run dev` by design (`SerwistProvider` disables it in development), so the service-worker and offline checks must run against the production build:
-
-```bash
-npm run build
-npm run start
-```
-
-The build must keep the route statuses (`/offline` ◐, `/manifest.webmanifest` ○, `/api/openapi.json` ○, `/reference` ○) — no shell may flip to fully dynamic under the worker.
-
-1. DevTools → Application → Manifest: no errors, installability section green.
-2. DevTools → Application → Service workers: the worker is registered and controlling the page.
-3. Offline: DevTools → Application → Service workers → Offline (or Network → Offline), then reload — every failed navigation serves the generic `/offline` fallback ("You're offline" with a retry action), never a cached signed-in page or API response.
-
-Lighthouse has no PWA category since v12, so there is no PWA score to gate on; legacy Lighthouse ≤11 PWA audits are optional only.
-
-#### No background behavior
-
-Push notifications, background sync, and periodic sync are explicitly out of scope: the worker source registers no push or sync handlers (pinned by the `sw background behavior absence` suite), so adopters inherit no undisclosed background behavior.
+`certificates/` are per-machine and gitignored — never commit them.
 
 ## Environment Variables
 
-All required variables are validated in `src/env.js`. Keep `.env.example` in sync when adding or removing variables.
+Validated in `src/env.js` (`emptyStringAsUndefined`). Full reference: [docs/env.md](docs/env.md).
 
-### Server Variables
-
-- `DATABASE_URL`
-- `NODE_ENV`
-- `BASE_URL`
-- `GOOGLE_SITE_VERIFICATION`
-- `AUTH_SECRET`
-- `NEXTAUTH_URL`
-- `GITHUB_CLIENT_ID`
-- `GITHUB_CLIENT_SECRET`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `UPSTASH_REDIS_REST_TOKEN`
-- `UPSTASH_REDIS_REST_URL`
-
-### Client Variables
-
-- `NEXT_PUBLIC_IS_IN_MAINTENANCE`
+Server (required): `DATABASE_URL`, `BASE_URL`, `NEXTAUTH_URL`, `AUTH_SECRET`, `GOOGLE_SITE_VERIFICATION`, `GITHUB_CLIENT_ID/SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `UPSTASH_REDIS_REST_URL/TOKEN`, `NODE_ENV`.
+Client: `NEXT_PUBLIC_IS_IN_MAINTENANCE` (required), `NEXT_PUBLIC_SW_IN_DEV` (optional).
+Build/test-only: `DATABASE_URL_TEST`, `AUTH_URL`, `EXPOSE_TESTING_API`, `SKIP_ENV_VALIDATION`, `PORT`.
 
 ## Scripts
 
-| Script | Command | Purpose |
-| --- | --- | --- |
-| `dev` | `next dev --turbo` | Start local development server |
-| `build` | `next build` | Create production build |
-| `start` | `next start` | Run production server |
-| `preview` | `next build && next start` | Build then run production locally |
-| `typecheck` | `tsc --noEmit` | Run TypeScript checks |
-| `check` | `ultracite check` | Run lint/format checks |
-| `fix` | `ultracite fix` | Auto-fix lint/format issues |
-| `check:write` | `biome check --write .` | Apply safe Biome fixes |
-| `check:unsafe` | `biome check --write --unsafe .` | Apply all Biome fixes (including unsafe) |
-| `db:generate` | `prisma migrate dev` | Create/apply dev migration and regenerate client |
-| `db:migrate` | `prisma migrate deploy` | Apply committed migrations in deploy environments |
-| `db:push` | `prisma db push` | Push schema directly without migration files |
-| `db:studio` | `prisma studio` | Open Prisma Studio |
+| Script | Purpose |
+|---|---|
+| `dev` | Start local dev server (`--turbo`) |
+| `dev:https` / `dev:https:lan` / `dev:https:lan:sw` | HTTPS / LAN phone / + worker |
+| `termux:dev` / `termux:build` | Dev / build with webpack (Termux) |
+| `build` | Production build (`next build && serwist build`) |
+| `start` / `preview` | Run production / build+run locally |
+| `typecheck` / `typecheck:test` | App types / test types |
+| `check` / `fix` / `check:write` / `check:unsafe` | Lint checks / auto-fix / Biome write / unsafe fixes |
+| `test` / `test:unit:watch` | Unit suite / watch |
+| `test:integration` / `test:all` / `test:coverage` | DB integration (needs `DATABASE_URL_TEST`) / all / coverage |
+| `test:e2e` | Playwright e2e |
+| `validate` | Full gate: typecheck + check:write + test:all + build |
+| `db:generate` / `db:migrate` / `db:push` / `db:studio` | Dev migration / deploy migrations / schema push / Studio |
+| `pwa:assets` | Regenerate `public/pwa/` install assets |
 
 ## Authentication Flow
 
-- Main auth config lives in `src/auth.ts` and `src/auth.config.ts`.
-- API auth handlers are mounted at `src/app/api/auth/[...nextauth]/route.ts`.
-- Custom auth pages:
-  - Sign-in page: `/auth`
-  - Error page: `/auth/error`
-- Session strategy is JWT, with custom token/session enrichment for user role, username, and email verification state.
-- Route protection and redirects are enforced in `src/proxy.ts`:
-  - Public routes stay accessible without login
-  - Auth routes redirect authenticated users to `DEFAULT_LOGIN_REDIRECT`
-  - Non-public routes redirect unauthenticated users to `/auth`
-  - Maintenance mode can redirect all traffic to `/maintenance`
+- Config: `src/auth.ts` + `src/auth.config.ts`; handler: `src/app/api/auth/[...nextauth]/route.ts`.
+- Pages: `/auth` (sign-in), `/auth/error`. JWT sessions with role stamping; `DEFAULT_LOGIN_REDIRECT=/`.
+- Guards in `src/proxy.ts` (+ `src/routes.ts` vocabulary); `/admin` gated in the layout via `AdminGate` → `forbidden()`.
+- Full matrix, sessions, and PAT lifecycle: [docs/auth.md](docs/auth.md).
 
 ## Database
 
-Prisma schema is defined in `prisma/schema.prisma` and currently includes:
-
-- `User`
-- `Account`
-- `Post`
-- `UserRole` enum
-
-### Migration Workflow
-
-Use these patterns depending on environment:
-
-- Local development: `npm run db:generate`
-- Deployment pipeline: `npm run db:migrate`
-- Rapid schema sync (non-migration flow): `npm run db:push`
+Models: `User`, `Account`, `Post`, `Role` (`ADMIN`/`MODERATOR`/`USER`), `PersonalAccessToken`. Local: `npm run db:generate`. Deploy: `npm run db:migrate`. Details: [docs/database.md](docs/database.md).
 
 ## Project Structure
 
 ```text
 .
-|- prisma/
-|  |- migrations/
-|  '- schema.prisma
+|- prisma/            # schema.prisma + migrations/
 |- src/
-|  |- app/
-|  |  |- api/
-|  |  |  |- auth/[...nextauth]/route.ts
-|  |  |  '- trpc/[trpc]/route.ts
-|  |  |- auth/
-|  |  '- layout.tsx
-|  |- server/
-|  |  |- api/
-|  |  '- db.ts
-|  |- trpc/
-|  |- auth.ts
-|  |- auth.config.ts
-|  |- env.js
-|  '- proxy.ts
+|  |- app/            # (app)/ (admin)/ (marketing)/ + api/auth, api/trpc, api/v1, api/openapi.json, reference/, offline/
+|  |- actions/        # Server Actions (sign-in/out/up)
+|  |- components/     # app components + ui/ (shadcn)
+|  |- server/api/     # tRPC setup, root, openapi, rest-auth + routers/
+|  |- services/       # business logic (server-only)
+|  |- data/           # repositories / Prisma (server-only)
+|  |- schemas/        # Zod contracts
+|  |- lib/            # db-cache, cache-tags, redis, shell, pwa/sw utils
+|  |- trpc/           # react/server/query-client helpers
+|  |- auth.ts, auth.config.ts, auth-events.ts, routes.ts, proxy.ts, env.js
+|- tests/             # unit setup/stubs, integration/, e2e/
+|- docs/              # guides + adr/ + research/
 |- .env.example
 '- package.json
 ```
 
+Architecture rules: [docs/architecture.md](docs/architecture.md).
+
 ## Quality Standards
 
-This repository uses Ultracite with Biome for formatting and linting.
-
-Recommended workflow before commit:
-
-```bash
-npm run fix
-npm run check
-npm run typecheck
-```
-
-If you need diagnostics for tooling setup:
-
-```bash
-npm exec -- ultracite doctor
-```
+Ultracite + Biome. Before pushing: `npm run fix`, `npm run typecheck`, `npm run test:all` (or `npm run validate`). Diagnostics: `npm exec -- ultracite doctor`. Conventions: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Deployment Notes
 
-1. Set all required environment variables from `src/env.js` in your hosting platform.
-2. Ensure `DATABASE_URL` points to your production PostgreSQL instance.
-3. Set `NEXTAUTH_URL` and `BASE_URL` to your production domain.
-4. Apply Prisma migrations in deployment with:
-
-```bash
-npm run db:migrate
-```
-
-5. Build and start:
-
-```bash
-npm run build
-npm run start
-```
+Set env in the host, run `npm run db:migrate`, then `npm run build` + `npm run start`. Full checklist, platform notes, health checks, rollback: [docs/deployment.md](docs/deployment.md).
 
 ## Troubleshooting
 
-### Environment validation fails on startup
-
-- Confirm every required variable in `src/env.js` is present and non-empty.
-- Re-check `.env` key names for typos.
-
-### OAuth sign-in fails or callback issues occur
-
-- Verify OAuth callback URLs in GitHub/Google dashboards match your `NEXTAUTH_URL` and NextAuth callback path.
-- Confirm `src/app/api/auth/[...nextauth]/route.ts` exists and is deployed.
-
-### Redirect loops or unexpected auth redirects
-
-- Review route lists and guard logic in `src/proxy.ts`.
-- Verify maintenance mode flag value for `NEXT_PUBLIC_IS_IN_MAINTENANCE`.
-
-### Prisma or database connection errors
-
-- Validate `DATABASE_URL` format and database reachability.
-- Re-run `npm run db:generate` after schema changes.
+See [docs/troubleshooting.md](docs/troubleshooting.md) — env, OAuth, redirects, DB, API codes, PWA/worker, e2e flakes.
 
 ## Contributing
 
-Contributions are welcome. Open an issue to discuss substantial changes before submitting a pull request.
-
-For contributions, ensure:
-
-- lint/format checks pass
-- type checks pass
-- migrations are included when schema changes are introduced
+Contributions welcome — open an issue first for substantial changes. Workflow and gate: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+MIT — see `LICENSE`.

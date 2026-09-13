@@ -2,7 +2,7 @@
 
 ## Stack
 
-- Next.js 16.2.4, React 19, TypeScript
+- Next.js 16.3, React 19, TypeScript
 - NextAuth 5 beta with Credentials, GitHub, and Google providers
 - tRPC 11 with React Query and SuperJSON
 - Prisma 7 with PostgreSQL and `pg`
